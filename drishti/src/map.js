@@ -1,16 +1,6 @@
 // The map: a CesiumJS globe (the same engine God's Eye View uses),
 // set up to need no API keys and no Cesium ion account.
-import {
-  Viewer,
-  ImageryLayer,
-  OpenStreetMapImageryProvider,
-  EllipsoidTerrainProvider,
-  SceneMode,
-  Cartesian3,
-  Rectangle,
-  Credit,
-  Color,
-} from 'cesium';
+import { Viewer, EllipsoidTerrainProvider, SceneMode, Cartesian3, Rectangle, Color } from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import { addCredit } from './credits.js';
 
@@ -20,23 +10,11 @@ export const INDIA = Rectangle.fromDegrees(67.5, 6.0, 98.0, 36.5);
 export function createMap(container) {
   const narrow = window.innerWidth <= 700;
 
-  // OpenStreetMap standard tiles, darkened to suit the theme.
-  // Light use with visible credit, as the OSM tile policy asks.
-  const osm = new OpenStreetMapImageryProvider({
-    url: 'https://tile.openstreetmap.org/',
-    credit: new Credit(
-      '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>',
-      true,
-    ),
-  });
-  const base = new ImageryLayer(osm);
-  base.brightness = 0.55;
-  base.contrast = 1.1;
-  base.saturation = 0.35;
-  base.gamma = 1.1;
-
+  // No street-map tiles: the common free ones draw India's borders the
+  // international way. The background map is drawn from official boundary
+  // data instead (layers/basemap.js).
   const viewer = new Viewer(container, {
-    baseLayer: base,
+    baseLayer: false,
     terrainProvider: new EllipsoidTerrainProvider(),
     sceneMode: narrow ? SceneMode.SCENE2D : SceneMode.SCENE3D,
     creditContainer: document.createElement('div'), // we show credits ourselves
@@ -56,14 +34,13 @@ export function createMap(container) {
 
   const scene = viewer.scene;
   scene.backgroundColor = Color.fromCssColorString('#0b1117');
-  scene.globe.baseColor = Color.fromCssColorString('#15222c');
+  scene.globe.baseColor = Color.fromCssColorString('#0f1c26'); // sea
   scene.skyAtmosphere.show = false;
   scene.fog.enabled = false;
   if (scene.skyBox) scene.skyBox.show = false;
   if (scene.sun) scene.sun.show = false;
   if (scene.moon) scene.moon.show = false;
 
-  addCredit('osm-tiles', 'Map tiles © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>');
   addCredit('engine', 'Map engine <a href="https://cesium.com/platform/cesiumjs/" target="_blank" rel="noopener">CesiumJS</a>');
   addCredit('gev', 'Based on <a href="https://github.com/bilawalsidhu/gods-eye-view" target="_blank" rel="noopener">God\'s Eye View</a> by Bilawal Sidhu');
   resetView(viewer, 0);
@@ -71,6 +48,11 @@ export function createMap(container) {
 }
 
 export function resetView(viewer, duration = 1.2) {
+  if (viewer.scene.mode === SceneMode.SCENE2D) {
+    // In the flat phone view, the camera height sets how wide the view is.
+    viewer.camera.flyTo({ destination: Cartesian3.fromDegrees(82.6, 22.5, 4.2e6), duration });
+    return;
+  }
   viewer.camera.flyTo({ destination: INDIA, duration });
 }
 

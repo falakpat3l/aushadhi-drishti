@@ -18,23 +18,36 @@ const MEASURES = [
 const PER_PERSON = /per (person|people|capita|head|lakh|10,?000|thousand|population)|per-capita|by population|for (its|their) population|relative to population/;
 
 export function value(p, id) {
-  if (id === 'gov_centres') return p.phc + p.chc + p.hospital_gov;
+  if (id === 'gov_centres') return p.no_centre_data ? null : p.phc + p.chc + p.hospital_gov;
   if (id === 'outlets_per_10k' && !p.osm_pharmacy) return null;
   return p[id] ?? null;
 }
+
+// Names too common to read as a district on their own (Delhi has districts
+// called North, East, Central...); they still match as "North district" etc.
+const VAGUE = new Set(['north', 'south', 'east', 'west', 'central', 'north east', 'north west', 'south east', 'south west', 'mon', 'new delhi']);
+const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function findDistricts(q, names) {
   const hits = [];
   const low = q.toLowerCase();
   for (const n of names) {
     const ln = n.toLowerCase();
-    const alt = ln.replace(/\s+/g, '');
-    if (low.includes(ln) || low.replace(/\s+/g, '').includes(alt)) hits.push(n);
+    if (VAGUE.has(ln) && !low.includes(`${ln} district`)) continue;
+    if (new RegExp(`\\b${escRe(ln)}\\b`).test(low) && !hits.includes(n)) hits.push(n);
   }
   // Common spellings that differ from the official names.
-  const aliases = { ahmedabad: 'Ahmadabad', dahod: 'Dohad', kutch: 'Kachchh', mehsana: 'Mahesana', panchmahal: 'Panch Mahals', banaskantha: 'Banas Kantha', sabarkantha: 'Sabar Kantha', 'chhota udaipur': 'Chhotaudepur', aravalli: 'Arvalli', dangs: 'Dang', 'vav-tharad': 'Banas Kantha', 'vav tharad': 'Banas Kantha' };
-  for (const [a, n] of Object.entries(aliases)) if (low.includes(a) && names.includes(n) && !hits.includes(n)) hits.push(n);
+  const aliases = { ahmedabad: 'Ahmadabad', dahod: 'Dohad', kutch: 'Kachchh', mehsana: 'Mahesana', panchmahal: 'Panch Mahals', banaskantha: 'Banas Kantha', sabarkantha: 'Sabar Kantha', 'chhota udaipur': 'Chhotaudepur', aravalli: 'Arvalli', dangs: 'Dang', 'vav-tharad': 'Banas Kantha', 'vav tharad': 'Banas Kantha', bangalore: 'Bengaluru Urban', bengaluru: 'Bengaluru Urban', gurgaon: 'Gurugram', calcutta: 'Kolkata', bombay: 'Mumbai', madras: 'Chennai', trivandrum: 'Thiruvananthapuram', baroda: 'Vadodara', allahabad: 'Prayagraj', 'ahmednagar': 'Ahmednagar', 'aurangabad': 'Aurangabad' };
+  for (const [a, n] of Object.entries(aliases)) if (new RegExp(`\\b${escRe(a)}\\b`).test(low) && names.includes(n) && !hits.includes(n)) hits.push(n);
   return hits;
+}
+
+function findState(q, states) {
+  const low = q.toLowerCase();
+  const sorted = [...states].sort((a, b) => b.length - a.length);
+  for (const s of sorted) if (new RegExp(`\\b${escRe(s.toLowerCase())}\\b`).test(low)) return s;
+  if (/\b(india|all india|country|nation(al)?)\b/.test(low)) return '';
+  return null;
 }
 
 function pickMeasure(q) {
@@ -60,10 +73,19 @@ function howMany(q) {
 }
 
 // Returns a plan: { kind, ... } that the page turns into an answer.
-export function parseQuestion(question, districts, stateName = 'Gujarat') {
+// stateName: the state picked on the map (or null for all of India). A state
+// named in the question wins; "in India" means all of India.
+export function parseQuestion(question, districts, stateName = null) {
   const q = ` ${question.toLowerCase().replace(/[?!.]+/g, ' ').replace(/\s+/g, ' ')} `;
-  const names = districts.map((d) => d.name);
-  const named = findDistricts(q, names);
+  const states = [...new Set(districts.map((d) => d.state).filter(Boolean))];
+  const asked = findState(q, states);
+  const scope = asked === null ? stateName : asked || null;
+  const inScope = scope ? districts.filter((d) => d.state === scope) : districts;
+  const outScope = districts.filter((d) => !inScope.includes(d));
+  // A state's own name (Lakshadweep, Chandigarh) is not read as a district.
+  const qNoState = asked ? q.replace(new RegExp(escRe(asked.toLowerCase()), 'g'), ' ') : q;
+  let named = findDistricts(qNoState, [...new Set(inScope.map((d) => d.name))]);
+  if (!named.length) named = findDistricts(qNoState, [...new Set(outScope.map((d) => d.name))]);
 
   // Medicine questions go to the medicine check.
   const med = q.match(/\b(price|cost|ceiling|alert|alerts|substandard|nsq|spurious|quality) (of|for) ([a-z0-9 .-]{3,40})/) || q.match(/\b(is|are) ([a-z0-9 .-]{3,40}) (safe|substandard|price controlled)/);
@@ -78,7 +100,7 @@ export function parseQuestion(question, districts, stateName = 'Gujarat') {
   const most = /(most|highest|largest|maximum|best served|\bmore\b)/.test(q);
 
   if (named.length === 1 && (/how many|what is|tell me|about|show|details/.test(q) || (!measure && !fewest && !most))) {
-    return { kind: 'district', district: named[0], measure: measure?.id || null };
+    return { kind: 'district', district: named[0], measure: measure?.id || null, state: scope };
   }
   if (measure || fewest || most || /rank|list|which district|where/.test(q)) {
     const m = measure || MEASURES[0];
@@ -87,15 +109,17 @@ export function parseQuestion(question, districts, stateName = 'Gujarat') {
     if (fewest) order = 'asc';
     if (most) order = 'desc';
     if (m.id === 'gap_score' && !fewest) order = 'desc';
-    return { kind: 'rank', measure: m.id, label: m.label, order, n: howMany(q), state: stateName };
+    return { kind: 'rank', measure: m.id, label: m.label, order, n: howMany(q), state: scope };
   }
-  if (named.length) return { kind: 'district', district: named[0], measure: null };
+  if (named.length) return { kind: 'district', district: named[0], measure: null, state: scope };
   return { kind: 'unknown' };
 }
 
-export function rank(districts, measure, order, n) {
-  return districts
-    .map((d) => ({ name: d.name, v: value(d, measure) }))
+export function rank(districts, measure, order, n, state = null) {
+  const pool = state ? districts.filter((d) => d.state === state) : districts;
+  const id = measure === 'gap_score' && state ? 'gap_score_state' : measure;
+  return pool
+    .map((d) => ({ name: d.name, lgd: d.lgd, state: d.state, v: value(d, id) }))
     .filter((x) => x.v != null)
     .sort((a, b) => (order === 'asc' ? a.v - b.v : b.v - a.v))
     .slice(0, n);

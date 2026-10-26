@@ -23,8 +23,15 @@ def build_alerts(args, files, note):
     places = IndiaPlaces(files["lgd"], files["pincodes"])
     items, sources = [], []
     try:
-        page = download(CDSCO_ALERTS_PAGE, name="cdsco_alerts.html", refresh=args.refresh, offline=args.offline, timeout=120)
-        links = cdsco.list_alert_links(page.read_text(encoding="utf-8", errors="replace"))
+        page = download(CDSCO_ALERTS_PAGE, name="cdsco_alerts.html", refresh=args.refresh, offline=args.offline, timeout=120,
+                        headers={"Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-IN,en"})
+        html = page.read_text(encoding="utf-8", errors="replace")
+        links = cdsco.list_alert_links(html)
+        if not links:
+            # Say what came back, so the next person can see why (a block page, a new layout...).
+            title = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
+            note("cdsco_page", False, f"alerts page read ({len(html)} characters, title: "
+                 f"{(title.group(1).strip()[:80] if title else 'none')}) but no monthly lists found in it")
         months = sorted({l["month"] for l in links}, reverse=True)[:KEEP_MONTHS]
         links = [l for l in links if l["month"] in months]
         parsed = 0

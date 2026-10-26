@@ -26,7 +26,7 @@ export const METRICS = [
   {
     id: 'gov_centres',
     label: 'Government health centres (PHC, CHC, hospitals)',
-    get: (p) => p.phc + p.chc + p.hospital_gov,
+    get: (p) => (p.no_centre_data ? null : p.phc + p.chc + p.hospital_gov),
     fmt: (v) => String(v),
     worse: 'low',
   },

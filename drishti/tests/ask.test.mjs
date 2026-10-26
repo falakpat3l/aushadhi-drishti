@@ -57,3 +57,20 @@ test('medicine questions', () => {
 test('unknown', () => {
   assert.equal(parseQuestion('hello there', D).kind, 'unknown');
 });
+
+test('states and all of India', () => {
+  const X = [
+    ...D.map((d) => ({ ...d, state: 'Gujarat' })),
+    { name: 'Aurangabad', state: 'Bihar', pop2011: 2540073, jak_official: 14, kendras_per_lakh: 0.55, phc: 1, chc: 1, hospital_gov: 0, gap_score: 90, gap_score_state: 40 },
+    { name: 'Aurangabad', state: 'Maharashtra', pop2011: 3701282, jak_official: 14, kendras_per_lakh: 0.38, phc: 1, chc: 1, hospital_gov: 0, gap_score: 95, gap_score_state: 70 },
+    { name: 'North', state: 'Delhi', pop2011: 887978, jak_official: 59, kendras_per_lakh: 6.6, phc: 0, chc: 0, hospital_gov: 0, gap_score: 1, no_centre_data: true },
+  ];
+  const p = parseQuestion('districts in Bihar with the fewest kendras per lakh people', X);
+  assert.equal(p.state, 'Bihar');
+  assert.equal(rank(X, p.measure, p.order, 5, p.state).length, 1);
+  assert.equal(parseQuestion('where in India is a new store needed', X, 'Gujarat').state, null);
+  assert.equal(parseQuestion('where is a new store needed', X, 'Gujarat').state, 'Gujarat');
+  assert.equal(parseQuestion('which district in the north east has the most kendras', X).kind, 'rank');
+  assert.equal(parseQuestion('tell me about Aurangabad in Maharashtra', X).state, 'Maharashtra');
+  assert.equal(rank(X, 'gov_centres', 'desc', 10).some((r) => r.name === 'North'), false);
+});

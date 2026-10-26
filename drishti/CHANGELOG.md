@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 (Phase 7)
+- All of India: 776 districts, all 767 rows of the official Kendra table (17,990 Kendras), 2011 population for every district (new districts rebuilt from sub-districts), health centres, pincodes.
+- The map of India as the Survey of India draws it, including all of Jammu and Kashmir, Ladakh and Arunachal Pradesh. Street-map tiles removed.
+- State picker: rankings, dots and pincode areas per state. Gap score both across India and within the state.
+- OpenStreetMap pharmacies and hospitals now come from Geofabrik's weekly India extract (Overpass turned our job away).
+- Ask the map understands state names and "in India".
+- CDSCO reader now reports what the alerts page returned when it finds no lists.
+
 ## 0.6.0 (Phase 6)
 - Weekly refresh: the Pages workflow re-fetches every source on Mondays and redeploys. A manual "refresh" button is in the Actions tab.
 - Design document for an opt-in stock-sharing layer (not built).

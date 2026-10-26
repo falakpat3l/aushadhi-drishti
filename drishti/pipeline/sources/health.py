@@ -14,13 +14,16 @@ TYPES = {
 }
 
 
-def load(path, state_name):
+def load(path, state_name=None):
+    """All facilities (or one state's, by the state name in the file).
+    The build places each one in a district by its position, because the
+    file's own state names use older spellings (ORISSA, PONDICHERRY)."""
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     out = []
     for feat in data["features"]:
         p = feat["properties"]
-        if (p.get("state") or "").strip().upper() != state_name:
+        if state_name and (p.get("state") or "").strip().upper() != state_name:
             continue
         lon, lat = feat["geometry"]["coordinates"][:2]
         out.append({"lon": lon, "lat": lat, "type": p.get("type"), "name": (p.get("name") or "").strip()})

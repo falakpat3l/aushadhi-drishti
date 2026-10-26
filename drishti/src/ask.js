@@ -8,7 +8,7 @@ import { loadJSON } from './data.js';
 
 const EXAMPLES = [
   'districts in Gujarat with the fewest generic stores per person',
-  'where is a new generic store most needed',
+  'where in India is a new generic store most needed',
   'compare Bharuch and Surat',
   'which pincodes in Bharuch need a store',
   'price of Dolo 650',
@@ -22,39 +22,42 @@ export function setupAsk(ui, layers) {
   form.hidden = false;
   window.dispatchEvent(new Event('resize')); // header height changed
   const districts = layers.districts.features.map((f) => f.properties);
-  const stateName = layers.meta.states[0].name;
+  const find = (name, state) => districts.find((x) => x.name === name && (!state || x.state === state)) || districts.find((x) => x.name === name);
 
   async function answer(question) {
-    const plan = parseQuestion(question, districts, stateName);
+    const plan = parseQuestion(question, districts, layers.state ? layers.state.name : null);
     if (plan.kind === 'rank') {
-      const rows = rank(districts, plan.measure, plan.order, plan.n);
+      const st = layers.meta.states.find((s) => s.name === plan.state);
+      if ((st ? st.slug : null) !== (layers.state ? layers.state.slug : null)) await layers.pickState(st ? st.slug : null);
+      const rows = rank(districts, plan.measure, plan.order, plan.n, plan.state);
       if (!rows.length) return `<p>No data yet for ${esc(plan.label)} in this build.</p>`;
       const sel = document.getElementById('metric');
-      if (sel && [...sel.options].some((o) => o.value === plan.measure)) {
-        sel.value = plan.measure;
+      const shown = plan.measure === 'gap_score' && plan.state ? 'gap_score_state' : plan.measure;
+      if (sel && [...sel.options].some((o) => o.value === shown)) {
+        sel.value = shown;
         sel.dispatchEvent(new Event('change'));
       }
       const dir = plan.order === 'asc' ? 'lowest' : 'highest';
-      return `<p>Districts in ${esc(stateName)} with the ${dir} <strong>${esc(plan.label)}</strong>:</p>
-        <ol class="results">${rows.map((r) => `<li><button type="button" data-district="${esc(r.name)}">${esc(r.name)}</button> ${fmt(r.v)}</li>`).join('')}</ol>
+      return `<p>Districts in ${esc(plan.state || 'India')} with the ${dir} <strong>${esc(plan.label)}</strong>:</p>
+        <ol class="results">${rows.map((r) => `<li><button type="button" data-lgd="${r.lgd}">${esc(r.name)}</button>${plan.state ? '' : `, ${esc(r.state)}`} ${fmt(r.v)}</li>`).join('')}</ol>
         <p class="note">The map is now coloured by this measure. Population is from Census 2011.</p>`;
     }
     if (plan.kind === 'district') {
-      layers.showDistrict(plan.district);
-      const d = districts.find((x) => x.name === plan.district);
+      const d = find(plan.district, plan.state);
+      layers.showDistrict(d.lgd);
       const line = plan.measure ? `<p>${esc(plan.district)}: <strong>${esc(measureLabel(plan.measure))}</strong> ${fmt(value(d, plan.measure))}.</p>` : '';
       return `${line}<p class="note">Details for ${esc(plan.district)} are open below.</p>`;
     }
     if (plan.kind === 'compare') {
-      const ds = plan.districts.map((n) => districts.find((x) => x.name === n));
+      const ds = plan.districts.map((n) => find(n, layers.state ? layers.state.name : null));
       const ids = ['pop2011', 'jak_official', 'kendras_per_lakh', 'people_per_kendra', 'gov_centres', 'gap_score'];
       return `<table class="kv"><tr><td></td>${ds.map((d) => `<td>${esc(d.name)}</td>`).join('')}</tr>
         ${ids.map((id) => `<tr><td>${esc(measureLabel(id))}</td>${ds.map((d) => `<td>${fmt(value(d, id))}</td>`).join('')}</tr>`).join('')}</table>`;
     }
     if (plan.kind === 'pincodes') {
-      const d = districts.find((x) => x.name === plan.district);
+      const d = find(plan.district, plan.state);
       const hints = d.pincode_hints || [];
-      layers.showDistrict(plan.district);
+      layers.showDistrict(d.lgd);
       return hints.length
         ? `<p>Pincodes in ${esc(plan.district)} with government health centres but no Kendra or mapped pharmacy:</p>
            <ol class="results">${hints.map((h) => `<li>${esc(h.pincode)} ${esc(h.office)} (${h.centres})</li>`).join('')}</ol>`
@@ -81,9 +84,9 @@ export function setupAsk(ui, layers) {
     run(input.value);
   });
   document.getElementById('answer').addEventListener('click', (ev) => {
-    const d = ev.target.closest('button[data-district]')?.dataset.district;
+    const d = ev.target.closest('button[data-lgd]')?.dataset.lgd;
     const a = ev.target.closest('button[data-ask]')?.dataset.ask;
-    if (d) layers.showDistrict(d);
+    if (d) layers.showDistrict(Number(d));
     if (a) {
       input.value = a;
       run(a);
@@ -96,7 +99,7 @@ export function setupAsk(ui, layers) {
 async function askAI(question, districts) {
   if (!import.meta.env.DEV) return null;
   try {
-    const table = districts.map((d) => [d.name, d.pop2011, d.jak_official, d.kendras_per_lakh, d.osm_pharmacy, d.phc + d.chc + d.hospital_gov, d.gap_score].join(',')).join('\n');
+    const table = districts.map((d) => [d.name, d.pop2011, d.jak_official, d.kendras_per_lakh, d.osm_pharmacy, d.phc + d.chc + d.hospital_gov, d.gap_score, d.state].join(',')).join('\n');
     const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, table }) });
     if (!r.ok) return null;
     return (await r.json()).answer || null;

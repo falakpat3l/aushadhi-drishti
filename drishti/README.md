@@ -5,7 +5,8 @@ An open, map-based "god's-eye view" of India's pharmacy supply side, built only 
 *aushadhi* means medicine and *drishti* means sight.
 
 - Live map: https://falakpat3l.github.io/aushadhi-drishti/
-- Started with Gujarat. Bharuch is the test district.
+- Covers all of India: 776 districts, 17,990 Jan Aushadhi Kendras. Bharuch (Gujarat) is the test district.
+- The map of India follows the Survey of India: all of Jammu and Kashmir, Ladakh and Arunachal Pradesh are shown inside India. No street-map tiles are used, because the common free ones draw India's borders the international way.
 
 ## Credit
 
@@ -31,6 +32,7 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 4 | Medicine layers: CDSCO quality alert counts by district and month, with links to the official lists; medicine check linking a brand (via anukalpa) to its generic, NPPA price cap and alert count | Done (see known gaps) |
 | 5 | Ask the map: plain questions answered from the local data by rules; optional local AI with a key in `.env` | Done |
 | 6 | Weekly refresh (GitHub Actions, Mondays) and a design for opt-in stock sharing ([design doc](docs/design-opt-in-stock-sharing.md)) | Done |
+| 7 | All of India, the official map of India, OpenStreetMap data from Geofabrik, state picker | Done |
 
 ## Folder map
 
@@ -39,16 +41,17 @@ drishti/
   index.html            the page
   src/                  map code (CesiumJS, plain JavaScript)
     main.js             starts everything
-    map.js              the map: no API keys, OpenStreetMap tiles
+    map.js              the map: no API keys, no street-map tiles
     ui.js               side panel and phone bottom sheet
     credits.js          attribution line, always visible
     insights.js         gap score and per-person measures
     medicine.js         alerts layer, timeline, medicine check
     ask.js, askRules.js "Ask the map" box and its rules
-    layers/             one file per map layer
-  public/               files served as they are (logo, built data)
+    layers/             one file per map layer (basemap.js draws the official map of India)
+  public/               files served as they are (logo, map of India, built data)
   pipeline/             data build (Python): download, clean, place, write
-    build.py            run this to make public/data/
+    build.py            run this to make public/data/ (all of India)
+    basemap.py          run this to remake the map of India (public/basemap/)
     config.py           states, URLs, map detail
     fetch.py            polite downloads (robots.txt, one name, cache)
     geo.py              boundaries, which-district-is-this-point
@@ -71,7 +74,8 @@ drishti/
 
 | Phone (360 px) | Laptop (1280 px) |
 |---|---|
-| ![phone](docs/images/phone-360-ask.png) | ![laptop](docs/images/desktop-1280-bharuch.png) |
+| ![phone](docs/images/phone-360.png) | ![laptop](docs/images/desktop-1280.png) |
+| ![phone, Gujarat](docs/images/phone-360-layers.png) | ![laptop, Bharuch](docs/images/desktop-1280-bharuch.png) |
 
 ## Known gaps
 

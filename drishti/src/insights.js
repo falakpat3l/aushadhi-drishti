@@ -12,7 +12,15 @@ addMetrics([
     get: (p) => p.gap_score,
     fmt: (v) => num(v),
     palette: 'warn',
-    note: '0 = well served, 100 = biggest gap, compared with other districts in the state.',
+    note: '0 = well served, 100 = biggest gap, compared with all districts in India.',
+  },
+  {
+    id: 'gap_score_state',
+    label: 'Gap score within the state',
+    get: (p) => p.gap_score_state,
+    fmt: (v) => num(v),
+    palette: 'warn',
+    note: '0 = well served, 100 = biggest gap, compared with other districts in the same state.',
   },
   {
     id: 'people_per_kendra',
@@ -43,13 +51,14 @@ addMetrics([
   },
 ]);
 
-export function insightRows(p, total) {
+export function insightRows(p, total, stateTotal) {
   return [
-    ['Gap score (0 to 100)', p.gap_score == null ? 'n/a' : `${num(p.gap_score)} (rank ${p.gap_rank} of ${total})`],
+    ['Gap score in India (0 to 100)', p.gap_score == null ? 'n/a' : `${num(p.gap_score)} (rank ${p.gap_rank} of ${total})`],
+    [`Gap score in ${p.state}`, p.gap_score_state == null ? 'n/a' : `${num(p.gap_score_state)} (rank ${p.gap_rank_state} of ${stateTotal})`],
     ['People per Kendra', num(p.people_per_kendra)],
     ['Kendras per 1 lakh people', num(p.kendras_per_lakh, 2)],
     ['Medicine outlets per 10,000 people', p.osm_pharmacy ? num(p.outlets_per_10k, 2) : 'needs OSM data'],
-    ['Government health centres per Kendra', num(p.centres_per_kendra, 1)],
+    ['Government health centres per Kendra', p.no_centre_data ? 'no NIC data' : num(p.centres_per_kendra, 1)],
   ];
 }
 
@@ -60,16 +69,18 @@ export function pincodeHintsHtml(p) {
     <ol class="results">${hints.map((h) => `<li>${esc(h.pincode)} ${esc(h.office)} (${h.centres} centre${h.centres > 1 ? 's' : ''})</li>`).join('')}</ol>`;
 }
 
-export function rankingHtml(features, weights) {
+export function rankingHtml(features, weights, stateName) {
+  const key = stateName ? 'gap_rank_state' : 'gap_rank';
+  const score = stateName ? 'gap_score_state' : 'gap_score';
   const top = features
     .map((f) => f.properties)
-    .filter((p) => p.gap_rank)
-    .sort((a, b) => a.gap_rank - b.gap_rank)
+    .filter((p) => p[key])
+    .sort((a, b) => a[key] - b[key])
     .slice(0, 5);
   const w = Object.entries(weights || {})
     .map(([k, v]) => `${{ people_per_kendra: 'people per Kendra', outlets_per_10k: 'outlets per person', centres_per_kendra: 'health centres per Kendra' }[k]} ${Math.round(v * 100)}%`)
     .join(', ');
-  return `<p class="note"><strong>Most in need of a generic store</strong></p>
-    <ol class="results">${top.map((p) => `<li><button type="button" data-district="${esc(p.name)}">${esc(p.name)}</button> ${num(p.gap_score)}</li>`).join('')}</ol>
+  return `<p class="note"><strong>Most in need of a generic store${stateName ? ` in ${esc(stateName)}` : ' in India'}</strong></p>
+    <ol class="results">${top.map((p) => `<li><button type="button" data-lgd="${p.lgd}">${esc(p.name)}</button>${stateName ? '' : `, ${esc(p.state)}`} ${num(p[score])}</li>`).join('')}</ol>
     <p class="note">Score made from: ${esc(w)}. <a href="${GAP_DOC}" target="_blank" rel="noopener">How the gap score works</a></p>`;
 }

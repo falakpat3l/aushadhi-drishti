@@ -162,6 +162,49 @@ class AlertCountsTest(unittest.TestCase):
             self.assertNotIn(secret, text)
 
 
+class AllIndiaTest(unittest.TestCase):
+    def test_wrapped_state_name(self):
+        text = """646 The Dadra and Nagar Dadra And Nagar Haveli 21
+Haveli and Daman and
+Diu
+647 Daman 16
+648 Diu 3
+649 Tripura Dhalai 3
+Total 43"""
+        rows, total = jak.parse_annexure(text)
+        self.assertEqual(total, 43)
+        self.assertEqual([r[0] for r in rows[:3]], ["The Dadra and Nagar Haveli and Daman and Diu"] * 3)
+        self.assertEqual(rows[3][:2], ("Tripura", "Dhalai"))
+
+    def test_seed_is_all_india(self):
+        rows = jak.load_counts()
+        self.assertEqual(len(rows), 767)
+        self.assertEqual(sum(r["kendras"] for r in rows), 17990)
+
+    def test_india_outline_is_official(self):
+        """The background map must show India as the Survey of India does."""
+        from shapely.geometry import Point, shape
+        data = json.loads((ROOT / "public" / "basemap" / "india-basemap.json").read_text())
+        india = shape(data["india"])
+        for name, lon, lat in [("Gilgit", 74.31, 35.92), ("Muzaffarabad", 73.47, 34.37), ("Aksai Chin", 79.3, 35.3),
+                               ("Tawang", 91.86, 27.59), ("Leh", 77.58, 34.15), ("Bharuch", 72.98, 21.7)]:
+            self.assertTrue(india.buffer(0.01).covers(Point(lon, lat)), f"{name} must be inside India")
+        for name, lon, lat in [("Lahore", 74.35, 31.55), ("Kathmandu", 85.32, 27.7), ("Dhaka", 90.41, 23.81)]:
+            self.assertFalse(india.covers(Point(lon, lat)), f"{name} must be outside India")
+        for n in data["neighbours"]:
+            self.assertLess(shape(n["geometry"]).buffer(0).intersection(india.buffer(-0.05)).area, 0.01, f"{n['name']} overlaps India")
+
+    @unittest.skipUnless(osm.osmium_ready(), "osmium-tool not installed")
+    def test_osm_extract(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            items = osm.extract(FIX / "osm_sample.osm.pbf", tmp)
+        kinds = sorted(i["kind"] for i in items)
+        self.assertEqual(kinds, ["hospital", "pharmacy", "pharmacy", "pharmacy"])
+        self.assertTrue(any(i["jak"] for i in items))
+        self.assertFalse(any("Ramesh" in json.dumps(i) for i in items), "pharmacy names must not be kept")
+
+
 class NppaTest(unittest.TestCase):
     def test_parse_sample_pdf(self):
         rows = nppa.parse_pdf(FIX / "nppa_sample.pdf")

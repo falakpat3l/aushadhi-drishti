@@ -9,7 +9,7 @@ Plain steps. Run each Terminal command one at a time, from the `drishti` folder.
    `cd ~/Claude2/aushadhi-drishti/drishti`
 3. Install the parts (first time only):
    `npm install`
-4. Build the map data (needs internet, takes a few minutes the first time):
+4. Build the map data for all of India (needs internet, takes a few minutes the first time):
    `pip3 install -r pipeline/requirements.txt`
    then `python3 pipeline/build.py`
 5. Start the map:
@@ -29,6 +29,17 @@ It opens the map at phone size (360 px) and laptop size (1280 px), fails on any 
 ## Put it online
 
 GitHub Pages builds the site by itself after each push (see `.github/workflows/drishti-pages.yml` at the top of the repository).
+
+## OpenStreetMap pharmacies on your Mac (optional)
+
+1. Install osmium-tool (free): `brew install osmium-tool`
+2. Run `python3 pipeline/build.py --refresh` (downloads the India file, about 1.5 GB, then deletes it)
+
+Without osmium-tool the build still works; it uses the last copy, or shows no OSM dots.
+
+## Remake the map of India
+
+Only needed if the official boundary changes: `pip3 install pyshp pyproj` then `python3 pipeline/basemap.py`. Commit the new `public/basemap/india-basemap.json`.
 
 ## Where the numbers come from
 

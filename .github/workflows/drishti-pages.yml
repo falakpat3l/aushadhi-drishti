@@ -49,6 +49,7 @@ jobs:
           restore-keys: drishti-data-
       - name: Data build (offline tests, then fetch and build)
         run: |
+          sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
           pip install -r pipeline/requirements.txt
           python -m unittest discover tests
           node --test tests/ask.test.mjs

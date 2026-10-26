@@ -65,17 +65,37 @@ def parse_annexure(text):
             if middle.lower().startswith(s.lower() + " "):
                 state, middle = s, middle[len(s):].strip()
                 break
+        else:
+            # A long state name cut short on this line, for example
+            # "646 The Dadra and Nagar Dadra And Nagar Haveli 21" with
+            # "Haveli and Daman and Diu" on the next lines.
+            hit = _state_prefix(middle, names)
+            if hit:
+                state, middle = hit
         if state:
             rows.append((state, middle, int(m.group(3))))
     return rows, total
 
 
-def load_counts(state_title):
+def _state_prefix(middle, names):
+    """(state, rest) when the line starts with the first 3 or more words of a state name."""
+    low = middle.lower().split()
+    for s in names:
+        words = s.lower().split()
+        for k in range(len(words) - 1, 2, -1):
+            if low[:k] == words[:k] and len(low) > k:
+                return s, " ".join(middle.split()[k:])
+    return None
+
+
+def load_counts(state_title=None):
+    """Rows of the seed table (all states, or one state)."""
     out = []
     with open(SEEDS / "jak_district_counts.csv", newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            if row["state"].lower() == state_title.lower():
-                out.append({"district": row["district"], "kendras": int(row["kendras"]), "as_on": row["as_on"]})
+            if state_title and row["state"].lower() != state_title.lower():
+                continue
+            out.append({"state": row["state"], "district": row["district"], "kendras": int(row["kendras"]), "as_on": row["as_on"]})
     return out
 
 

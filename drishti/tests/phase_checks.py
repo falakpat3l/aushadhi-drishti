@@ -8,6 +8,8 @@ def district_detail(page, name):
     page.wait_for_timeout(1500)
     text = page.inner_text("#detail")
     assert "15,51,019" in text, "Bharuch population missing"
+    assert "Gujarat" in page.inner_text("#detail-section"), "state name missing from district details"
+    assert "in India" in page.inner_text("#ranking"), "All-India ranking missing"
     assert "14" in text, "Bharuch Kendra count missing"
     assert "Gap score" in text and "rank" in text, "Phase 3: gap score missing"
     assert page.inner_text("#ranking").count("\n") >= 3, "Phase 3: ranking list missing"
@@ -15,7 +17,12 @@ def district_detail(page, name):
 
 
 def layer_switches(page, name):
-    """Phase 2: every enabled layer switch can be turned on without errors."""
+    """Phase 2: pick a state, then every enabled layer switch can be turned on without errors."""
+    page.evaluate("() => window.__ad.layers.pickState('gujarat')")
+    page.wait_for_timeout(2500)
+    assert page.eval_on_selector("#state-pick", "el => el.value") == "gujarat", "state picker did not change"
+    assert "in Gujarat" in page.inner_text("#ranking"), "state ranking missing"
+    assert page.eval_on_selector("#metric", "el => el.value") == "gap_score_state", "state gap score not shown"
     for box in page.query_selector_all("input[data-layer]:not([disabled])"):
         if not box.is_checked():
             box.check()

@@ -12,20 +12,30 @@ export function addPoints(viewer, kind, rows, makeInfo) {
   const style = POINT_STYLES[kind];
   const col = viewer.scene.primitives.add(new PointPrimitiveCollection());
   const color = Color.fromCssColorString(style.color);
-  for (const r of rows) {
-    col.add({
-      position: Cartesian3.fromDegrees(r[0], r[1]),
-      pixelSize: style.size,
-      color,
-      outlineColor: Color.fromCssColorString('#0b1117'),
-      outlineWidth: 1,
-      scaleByDistance: new NearFarScalar(2e4, 1.6, 4e6, 0.7),
-      id: { kind: 'point', layer: kind, info: () => makeInfo(r) },
-    });
-  }
+  let count = 0;
+  const fill = (list) => {
+    col.removeAll();
+    count = list.length;
+    for (const r of list) {
+      col.add({
+        position: Cartesian3.fromDegrees(r[0], r[1], 1500),
+        pixelSize: style.size,
+        color,
+        outlineColor: Color.fromCssColorString('#0b1117'),
+        outlineWidth: 1,
+        scaleByDistance: new NearFarScalar(2e4, 1.6, 4e6, 0.7),
+        id: { kind: 'point', layer: kind, info: () => makeInfo(r) },
+      });
+    }
+    viewer.scene.requestRender();
+  };
+  fill(rows);
   col.show = false;
   return {
-    count: rows.length,
+    get count() {
+      return count;
+    },
+    setRows: fill,
     setVisible(on) {
       col.show = on;
       viewer.scene.requestRender();

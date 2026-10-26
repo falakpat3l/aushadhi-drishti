@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand made test sample">
+  <node id="1" version="1" lat="21.7051" lon="72.9959"><tag k="amenity" v="pharmacy"/><tag k="name" v="Ramesh Medical Stores"/></node>
+  <node id="2" version="1" lat="21.7100" lon="72.9800"><tag k="amenity" v="pharmacy"/><tag k="name" v="Pradhan Mantri Bhartiya Janaushadhi Kendra"/></node>
+  <node id="3" version="1" lat="21.7200" lon="72.9700"><tag k="shop" v="chemist"/></node>
+  <node id="4" version="1" lat="21.7300" lon="72.9600"><tag k="amenity" v="cafe"/><tag k="name" v="Tea point"/></node>
+  <node id="10" version="1" lat="21.7000" lon="73.0000"/>
+  <node id="11" version="1" lat="21.7000" lon="73.0020"/>
+  <node id="12" version="1" lat="21.7020" lon="73.0020"/>
+  <node id="13" version="1" lat="21.7020" lon="73.0000"/>
+  <way id="20" version="1"><nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="13"/><nd ref="10"/><tag k="amenity" v="hospital"/><tag k="name" v="Civil Hospital Bharuch"/></way>
+</osm>

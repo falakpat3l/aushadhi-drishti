@@ -47,11 +47,13 @@ def _wait_turn(host, min_gap):
     _last_call[host] = time.time()
 
 
-def download(url, name=None, refresh=False, offline=False, min_gap=1.0, data=None, timeout=300):
-    """Return the local path of url, downloading it if needed."""
-    CACHE.mkdir(parents=True, exist_ok=True)
+def download(url, name=None, refresh=False, offline=False, min_gap=1.0, data=None, timeout=300, folder=None, headers=None):
+    """Return the local path of url, downloading it if needed.
+    `folder` puts the file somewhere other than the cache (for very big files)."""
+    where = Path(folder) if folder else CACHE
+    where.mkdir(parents=True, exist_ok=True)
     key = name or hashlib.sha1((url + (data or "")).encode()).hexdigest()[:16]
-    path = CACHE / key
+    path = where / key
     if path.exists() and not refresh:
         return path
     if offline:
@@ -61,7 +63,7 @@ def download(url, name=None, refresh=False, offline=False, min_gap=1.0, data=Non
     host = urllib.parse.urlsplit(url).netloc
     _wait_turn(host, min_gap)
     body = data.encode() if data else None
-    req = urllib.request.Request(url, data=body, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, data=body, headers={"User-Agent": USER_AGENT, **(headers or {})})
     tmp = path.with_suffix(".part")
     with urllib.request.urlopen(req, timeout=timeout) as r, open(tmp, "wb") as f:
         while chunk := r.read(1 << 20):

@@ -34,13 +34,21 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/pipeline/medicines.py`, `pipeline/places.py`, `pipeline/sources/cdsco.py`, `sources/nppa.py`, `sources/anukalpa.py`
 - Added `drishti/src/medicine.js`; changed `src/layers/index.js`, `index.html`, `pipeline/build.py`
 - Added `drishti/tests/fixtures/make_fixtures.py`, `cdsco_sample.pdf`, `nppa_sample.pdf`, `alerts_sample.json`, `medicines_sample.json`; changed `tests/test_pipeline.py`, `tests/phase_checks.py`
-- Added `drishti/docs/permission-requests.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
+- Added `drishti/docs/permission-requests.md`, `drishti/docs/KNOWN_GAPS.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
 
 ## Phase 5
 - Added `drishti/src/ask.js`, `src/askRules.js`, `tests/ask.test.mjs`
-- Changed `drishti/src/main.js`, `src/ui.js`, `src/style.css`, `vite.config.js` (local-only AI helper), `.env.example`, `tests/phase_checks.py`
+- Changed `drishti/src/main.js`, `src/ui.js`, `src/style.css`, `vite.config.js` (local-only AI helper), `.env.example`, `tests/phase_checks.py`, `docs/KNOWN_GAPS.md`, `README.md`, `GUIDE.md`, `CHANGELOG.md`, `.github/workflows/drishti-pages.yml` (runs the ask-rule tests)
 
 ## Phase 6
-- Changed `.github/workflows/drishti-pages.yml`: weekly schedule, manual refresh option, ask-rule tests, data notes artifact
-- Added `drishti/docs/design-opt-in-stock-sharing.md`, `drishti/docs/KNOWN_GAPS.md`
-- Changed `drishti/README.md`, `GUIDE.md`, `DATA_SOURCES.md`, `CHANGELOG.md`
+- Changed `.github/workflows/drishti-pages.yml`: weekly schedule, manual refresh option, data notes artifact
+- Added `drishti/docs/design-opt-in-stock-sharing.md`
+- Changed `drishti/README.md`, `GUIDE.md`, `CHANGELOG.md`, `package.json`
+
+## Phase 7
+- Added `drishti/pipeline/basemap.py`, `drishti/public/basemap/india-basemap.json`, `drishti/src/layers/basemap.js`, `drishti/pipeline/seeds/district_merges.csv`, `drishti/tests/fixtures/osm_sample.osm`, `osm_sample.osm.pbf`
+- Changed `drishti/pipeline/build.py`, `config.py`, `fetch.py`, `geo.py`, `insights.py`, `medicines.py`, `sources/jak.py`, `sources/osm.py`, `sources/health.py`, `sources/population.py`, `requirements.txt`, `seeds/jak_district_counts.csv`, `seeds/district_aliases.csv`, `seeds/README.md`
+- Changed `drishti/src/map.js`, `layers/index.js`, `layers/districts.js`, `layers/pincodes.js`, `layers/points.js`, `insights.js`, `details.js`, `metrics.js`, `ask.js`, `askRules.js`
+- Changed `drishti/tests/test_pipeline.py`, `tests/ask.test.mjs`, `tests/phase_checks.py`, screenshots
+- Changed `drishti/README.md`, `DATA_SOURCES.md`, `GUIDE.md`, `CHANGELOG.md`, `docs/KNOWN_GAPS.md`, `docs/gap-score.md`, `.gitignore`, `package.json`
+- Changed `.github/workflows/drishti-pages.yml` (installs osmium-tool)

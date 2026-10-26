@@ -3,6 +3,7 @@ import { GeoJsonDataSource, Color, ColorMaterialProperty, ConstantProperty } fro
 import { loadJSON } from '../data.js';
 import { METRICS, metricById } from '../metrics.js';
 import { esc } from '../ui.js';
+import { HEIGHT } from './basemap.js';
 
 const PALETTES = {
   seq: ['#16323d', '#1d5560', '#26807e', '#33ad97', '#5fdcb5'],
@@ -23,8 +24,8 @@ export function classOf(value, breaks) {
   return c;
 }
 
-export async function addDistricts(viewer, ui, { slug, onSelect }) {
-  const fc = await loadJSON(`${slug}/districts.geojson`);
+export async function addDistricts(viewer, ui) {
+  const fc = await loadJSON('districts.geojson');
   const ds = await GeoJsonDataSource.load(fc, {
     stroke: Color.fromCssColorString('#9fb3c2'),
     strokeWidth: 1,
@@ -36,23 +37,29 @@ export async function addDistricts(viewer, ui, { slug, onSelect }) {
     const props = byLgd.get(e.properties.lgd.getValue());
     e.ad = { kind: 'district', props };
     if (e.polygon) {
+      e.polygon.height = new ConstantProperty(HEIGHT.districts);
       e.polygon.outline = new ConstantProperty(true);
-      e.polygon.outlineColor = new ConstantProperty(Color.fromCssColorString('#c9d6df').withAlpha(0.7));
+      e.polygon.outlineColor = new ConstantProperty(Color.fromCssColorString('#c9d6df').withAlpha(0.35));
     }
   }
 
   let current = 'gap_score';
-  function paint(metricId) {
+  let focus = null; // a state's slug, or null for all of India
+  function paint(metricId = current) {
     current = metricId;
     const m = metricById(metricId);
-    const vals = fc.features.map((f) => m.get(f.properties));
+    const inView = (p) => !focus || p.slug === focus;
+    const vals = fc.features.map((f) => f.properties).filter(inView).map((p) => m.get(p));
     const breaks = classBreaks(vals);
     const pal = PALETTES[m.palette || 'seq'];
     for (const e of ds.entities.values) {
-      const v = m.get(e.ad.props);
+      if (!e.polygon) continue;
+      const p = e.ad.props;
+      const v = m.get(p);
       const c = classOf(v, breaks);
-      const col = c < 0 ? Color.fromCssColorString('#3a4650').withAlpha(0.35) : Color.fromCssColorString(pal[c]).withAlpha(0.72);
-      if (e.polygon) e.polygon.material = new ColorMaterialProperty(col);
+      let col = c < 0 ? Color.fromCssColorString('#3a4650').withAlpha(0.45) : Color.fromCssColorString(pal[c]).withAlpha(0.78);
+      if (!inView(p)) col = Color.fromCssColorString('#2a3742').withAlpha(0.55);
+      e.polygon.material = new ColorMaterialProperty(col);
     }
     drawLegend(ui.legend, m, vals, breaks, pal);
     viewer.scene.requestRender();
@@ -62,6 +69,10 @@ export async function addDistricts(viewer, ui, { slug, onSelect }) {
     dataSource: ds,
     features: fc.features,
     paint,
+    setFocus(slug) {
+      focus = slug;
+      paint();
+    },
     get metric() {
       return current;
     },
@@ -74,6 +85,10 @@ export async function addDistricts(viewer, ui, { slug, onSelect }) {
 
 function drawLegend(el, m, vals, breaks, pal) {
   const v = vals.filter((x) => x != null);
+  if (!v.length) {
+    el.innerHTML = `<div><strong>${esc(m.label)}</strong></div><div class="note">No data for this measure here.</div>`;
+    return;
+  }
   const min = Math.min(...v);
   const max = Math.max(...v);
   el.innerHTML = `

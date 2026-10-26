@@ -2,7 +2,10 @@
 
 The gap score answers one question: **in which district would one more Jan Aushadhi (generic medicine) store help the most?**
 
-Every district gets a score from **0 (well served)** to **100 (biggest gap)**. Districts are compared only with the other districts in the same state.
+Every district gets a score from **0 (well served)** to **100 (biggest gap)**, worked out twice:
+
+- **Gap score in India:** compared with all districts in India. The map opens coloured by this.
+- **Gap score within the state:** compared only with districts in the same state. Shown when you pick a state.
 
 ## The three signals
 
@@ -17,14 +20,16 @@ Why the third one: government centres write prescriptions for generic medicines.
 ## The steps
 
 1. Work out the three numbers for every district.
-2. Turn each number into a rank from 0 to 100 among the state's districts. The best district on that signal gets 0, the worst gets 100, the middle one about 50. Ties share a rank.
+2. Turn each number into a rank from 0 to 100 among the districts being compared (all of India, or one state). The best district on that signal gets 0, the worst gets 100, the middle one about 50. Ties share a rank.
 3. Add the three ranks with the weights above.
 
 Example: a district that is the worst on every signal scores 100. One that is in the middle on all three scores about 50.
 
 ## When a signal is missing
 
-If a build has no OpenStreetMap pharmacies at all (for example the OSM server was down), the outlets signal would only repeat the first signal, so it is left out. The other two weights are scaled up to add to 100% (two thirds and one third). The map shows which weights were used, under the ranking list.
+If a build has no OpenStreetMap pharmacies at all (for example the weekly download failed), the outlets signal would only repeat the first signal, so it is left out. The other two weights are scaled up to add to 100% (two thirds and one third). The map shows which weights were used, under the ranking list.
+
+In states where the NIC file has no health centres (see known gaps), the centres signal is missing for those districts, so their score uses the other signals only. Districts with no Census population (the Pakistan-occupied areas) get no score.
 
 ## Pincodes to look at first
 
