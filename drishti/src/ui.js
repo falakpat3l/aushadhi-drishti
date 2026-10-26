@@ -2,15 +2,14 @@
 export function setupPanel() {
   const panel = document.getElementById('panel');
   const toggle = document.getElementById('panel-toggle');
-  const narrow = window.innerWidth <= 700;
 
   const setOpen = (open) => {
     panel.classList.toggle('open', open);
     document.body.classList.toggle('panel-open', open);
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.textContent = open ? 'Close' : 'Panel';
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
   };
-  setOpen(!narrow);
+  setOpen(true); // open most of the time; the menu button hides it
   toggle.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
 
   return {

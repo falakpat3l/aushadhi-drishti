@@ -8,6 +8,8 @@ export const METRICS = [
     get: (p) => p.pop2011 || null,
     fmt: (v) => v.toLocaleString('en-IN'),
     worse: 'high',
+    goodLabel: 'Fewer people',
+    badLabel: 'More people',
   },
   {
     id: 'jak_official',

@@ -6,6 +6,7 @@
 
 Writes small JSON files to public/data/, which the website loads:
   districts.geojson          every district, with its numbers and gap scores
+  states.geojson             every state and UT, the same numbers added up, with a gap score among states
   states/<state>/points.json dots for one state (loaded when that state is picked)
   states/<state>/pincodes.geojson
   meta.json                  states, totals, and which sources worked
@@ -281,6 +282,27 @@ def main():
         props["label"] = [round(lp.x, 3), round(lp.y, 3)]  # where the map writes the name
         feats.append(geo.feature(d["geom"], props, SIMPLIFY_DISTRICT))
     (OUT / "districts.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
+
+    # States: the same measures added up, and a gap score among states.
+    from shapely.ops import unary_union
+    srows = []
+    for state in sorted({d["state"] for d in districts}):
+        own = [d for d in districts if d["state"] == state]
+        row = {"name": state, "state": state, "slug": geo.slug(state)}
+        for k in ("pop2011", "jak_official", "osm_pharmacy", "osm_jak", "osm_hospital", "phc", "chc", "hospital_gov", "subcentre"):
+            row[k] = sum(d[k] for d in own)
+        row["no_centre_data"] = all(d.get("no_centre_data") for d in own)
+        row["districts"] = len(own)
+        row["geom"] = unary_union([d["geom"].buffer(0) for d in own]).buffer(0.002).buffer(-0.002)
+        srows.append(row)
+    insights.add_insights(srows, by_state=False)
+    sfeats = []
+    for r in srows:
+        props = {k: v for k, v in r.items() if k not in ("geom", "gap_parts")}
+        lp = r["geom"].representative_point()
+        props["label"] = [round(lp.x, 3), round(lp.y, 3)]
+        sfeats.append(geo.feature(r["geom"], props, 0.01))
+    (OUT / "states.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": sfeats}, separators=(",", ":")))
 
     fields = {
         "jak": ["lon", "lat", "store_code", "pincode", "precision"],

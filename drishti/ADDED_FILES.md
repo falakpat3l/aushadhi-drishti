@@ -64,3 +64,6 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 
 ## Phase 8 polish
 - Changed `drishti/index.html` (Coming soon section), `src/style.css`, `src/theme.js`, `src/insights.js`, `src/medicine.js`, `src/map.js`, `src/layers/index.js`, `layers/districts.js`, `layers/pincodes.js`, `tests/phase_checks.py`, `CHANGELOG.md`, screenshots
+
+## Phase 8 views
+- Added `drishti/src/layers/states.js`; changed `pipeline/build.py` (writes `states.geojson`), `index.html`, `src/style.css`, `src/ui.js`, `src/metrics.js`, `src/layers/index.js`, `layers/districts.js`, `tests/phase_checks.py`, `CHANGELOG.md`

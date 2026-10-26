@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2
+- Show by States, Districts or Pincodes. States get the same measures added up from their districts and a gap score among states.
+- Menu button (three lines) instead of the word Panel; the panel is open by default.
+- Top and bottom bars use the opposite shade (dark in light mode, light in dark mode) for contrast; teal and saffron accents.
+- Legend reads Well served, Underserved, No data.
+
 ## 0.8.1
 - Calmer panel: only switches that work right now are shown; everything not available yet is listed once under "Coming soon" at the bottom.
 - Colours mean the same everywhere: green is better, red is worse, grey is no data. The legend says so.

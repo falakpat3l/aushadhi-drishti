@@ -19,6 +19,12 @@ def district_detail(page, name):
 
 def layer_switches(page, name):
     """Phase 2: pick a state, then every enabled layer switch can be turned on without errors."""
+    page.evaluate("() => window.__ad.layers.pickState(null)")
+    page.wait_for_timeout(800)
+    page.click("button[data-level=state]")
+    page.wait_for_timeout(800)
+    assert "States most in need" in page.inner_text("#ranking"), "state-level view missing"
+    page.click("button[data-level=district]")
     page.evaluate("() => window.__ad.layers.pickState('gujarat')")
     page.wait_for_timeout(2500)
     assert page.eval_on_selector("#state-pick", "el => el.value") == "gujarat", "state picker did not change"

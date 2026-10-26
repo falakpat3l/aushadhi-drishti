@@ -6,6 +6,7 @@ import { loadJSON } from '../data.js';
 import { addDistricts, metricOptions } from './districts.js';
 import { addPoints, POINT_STYLES } from './points.js';
 import { pincodeLayer } from './pincodes.js';
+import { addStates } from './states.js';
 import { addBasemap } from './basemap.js';
 import { esc } from '../ui.js';
 import { addCredit } from '../credits.js';
@@ -22,6 +23,8 @@ export async function registerLayers(map, ui) {
   await addBasemap(map);
   const districts = await addDistricts(map, ui);
   const pincodes = pincodeLayer(map);
+  const states = await addStates(map, ui);
+  let level = 'district'; // 'state', 'district' or 'pincode'
   const stateBySlug = new Map(meta.states.map((s) => [s.slug, s]));
   let current = null; // the picked state, or null for all of India
 
@@ -39,9 +42,11 @@ export async function registerLayers(map, ui) {
       <select id="state-pick"><option value="">All India</option>
         ${meta.states.map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
     <div class="field"><label for="metric">Colour by</label><select id="metric">${metricOptions()}</select></div>
+    <div class="field"><span class="field-label">Show by</span>
+      <div class="seg" role="group" aria-label="Show by">
+        <button type="button" data-level="state">States</button><button type="button" data-level="district">Districts</button><button type="button" data-level="pincode">Pincodes</button>
+      </div></div>
     <div class="switches">
-      <label><input type="checkbox" data-layer="districts" checked><span>Districts <small id="district-note"></small></span></label>
-      <label><input type="checkbox" data-layer="pincodes"><span>Pincodes <small id="pincode-note"></small></span></label>
       ${Object.entries(POINT_STYLES).map(([k, s]) => `
         <label><input type="checkbox" data-layer="${k}"><span><i class="dot" style="background:${s.color}"></i>${esc(s.label)} <small data-count="${k}"></small></span></label>`).join('')}
       <label><input type="checkbox" data-layer="alerts"><span><i class="dot" style="background:#e0a21b"></i>Drug quality alerts <small>${layers.alerts.count.toLocaleString('en-IN')} samples</small></span></label>
@@ -81,7 +86,24 @@ export async function registerLayers(map, ui) {
     ui.crumbs.innerHTML = parts.join('<i>/</i>');
   }
 
+  function setLevel(l) {
+    level = l;
+    ui.layerList.querySelectorAll('button[data-level]').forEach((b) => b.classList.toggle('on', b.dataset.level === l));
+    states.setVisible(l === 'state');
+    districts.setVisible(l !== 'state');
+    pincodes.setVisible(l === 'pincode');
+    if (l === 'state') states.paint(metricSel.value);
+    else districts.paint(metricSel.value);
+    drawRanking();
+  }
+
   function drawRanking() {
+    if (level === 'state') {
+      const top = [...states.bySlug.values()].filter((p) => p.gap_rank).sort((a, b) => a.gap_rank - b.gap_rank).slice(0, 5);
+      ranking.innerHTML = `<p class="note"><strong>States most in need of generic stores</strong></p>
+        <ol class="results">${top.map((p) => `<li><button type="button" data-slug="${p.slug}">${esc(p.name)}</button> ${Math.round(p.gap_score)}</li>`).join('')}</ol>`;
+      return;
+    }
     const feats = current ? districts.features.filter((f) => f.properties.slug === current.slug) : districts.features;
     ranking.innerHTML = rankingHtml(feats, meta.india.gap_weights, current ? current.name : null);
   }
@@ -95,9 +117,8 @@ export async function registerLayers(map, ui) {
         box.dispatchEvent(new Event('change'));
       }
     };
-    $('#district-note').textContent = current ? `${current.districts}` : `${meta.india.districts}`;
-    $('#pincode-note').textContent = current ? current.pincodes.toLocaleString('en-IN') : '';
-    show($('input[data-layer=pincodes]'), !!current);
+    $('button[data-level=pincode]').hidden = !current;
+    if (!current && level === 'pincode') setLevel('district');
     for (const k of Object.keys(POINT_STYLES)) {
       const n = current ? current.counts[k] : 0;
       show($(`input[data-layer=${k}]`), n > 0);
@@ -112,10 +133,12 @@ export async function registerLayers(map, ui) {
     current = slug ? stateBySlug.get(slug) || null : null;
     statePick.value = current ? current.slug : '';
     districts.select(null);
+    if (current && level === 'state') setLevel('district');
     districts.setFocus(current ? current.slug : null);
     if (current && metricSel.value === 'gap_score') metricSel.value = 'gap_score_state';
     if (!current && metricSel.value === 'gap_score_state') metricSel.value = 'gap_score';
-    districts.paint(metricSel.value);
+    if (level === 'state') states.paint(metricSel.value);
+    else districts.paint(metricSel.value);
     drawRanking();
     updateSwitches();
     crumbs(null);
@@ -172,6 +195,11 @@ export async function registerLayers(map, ui) {
       ui.showDetail(info.title, info.raw);
       return;
     }
+    if (level === 'state') {
+      const sf = map.queryRenderedFeatures(e.point, { layers: ['states-fill'] })[0];
+      if (sf) pickState(states.slugAt(sf.id));
+      return;
+    }
     const d = map.queryRenderedFeatures(e.point, { layers: ['districts-fill'] })[0];
     if (!d) return;
     const p = districts.byLgd.get(d.id);
@@ -191,6 +219,8 @@ export async function registerLayers(map, ui) {
   ranking.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-lgd]');
     if (btn) showDistrict(Number(btn.dataset.lgd));
+    const st = ev.target.closest('button[data-slug]');
+    if (st) pickState(st.dataset.slug);
   });
   ui.crumbs.addEventListener('click', (ev) => {
     const go = ev.target.closest('button[data-go]')?.dataset.go;
@@ -198,18 +228,18 @@ export async function registerLayers(map, ui) {
     if (go === 'state' && current) pickState(current.slug);
   });
   metricSel.value = districts.metric;
-  metricSel.addEventListener('change', () => districts.paint(metricSel.value));
+  metricSel.addEventListener('change', () => (level === 'state' ? states.paint(metricSel.value) : districts.paint(metricSel.value)));
+  ui.layerList.querySelectorAll('button[data-level]').forEach((b) => b.addEventListener('click', () => setLevel(b.dataset.level)));
   statePick.addEventListener('change', () => pickState(statePick.value));
   ui.layerList.querySelectorAll('input[data-layer]').forEach((box) => {
     box.addEventListener('change', () => {
       const id = box.dataset.layer;
-      if (id === 'districts') districts.setVisible(box.checked);
-      else if (id === 'pincodes') pincodes.setVisible(box.checked);
-      else layers[id].setVisible(box.checked);
+      layers[id].setVisible(box.checked);
     });
   });
   document.getElementById('data-date').textContent = `Data built ${meta.built}.`;
   await pickState(null, { fly: false });
+  setLevel('district');
 
   addCredit('lgd', 'Districts: LGD via <a href="https://github.com/yashveeeeeeer/india-geodata" target="_blank" rel="noopener">india-geodata</a>');
   addCredit('census', 'Population: Census 2011');

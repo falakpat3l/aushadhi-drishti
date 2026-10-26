@@ -20,6 +20,14 @@
   --r: 12px;
   --gap: 12px;
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  /* top and bottom bars use the opposite shade, for contrast */
+  --chrome: #1c1f22;
+  --chrome-fg: #f1f1f1;
+  --chrome-muted: #a8b0b5;
+  --chrome-line: rgba(255, 255, 255, 0.28);
+  --accent: #0f8a7a;
+  --accent-soft: rgba(15, 138, 122, 0.1);
+  --saffron: #d9771f;
 }
 
 :root[data-theme='dark'] {
@@ -33,6 +41,13 @@
   --hover: rgba(138, 180, 248, 0.1);
   --veil: rgba(20, 20, 20, 0.92);
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --chrome: #eceeef;
+  --chrome-fg: #141414;
+  --chrome-muted: #5f6368;
+  --chrome-line: rgba(0, 0, 0, 0.25);
+  --accent: #5ec4b6;
+  --accent-soft: rgba(94, 196, 182, 0.12);
+  --saffron: #f0a050;
 }
 
 * { box-sizing: border-box; }
@@ -52,9 +67,16 @@ button, input, select { font: inherit; color: inherit; }
 .bar {
   position: fixed; inset: 0 0 auto 0; height: var(--bar); z-index: 5;
   display: flex; align-items: center; gap: 12px; padding: 0 16px;
-  background: var(--bg); border-bottom: 1px solid var(--rule);
+  background: var(--chrome); color: var(--chrome-fg); border-bottom: 1px solid var(--chrome-line);
 }
-.brand { font-weight: 700; font-size: 18px; color: var(--fg); text-decoration: none; white-space: nowrap; }
+.bar .tag { color: var(--chrome-muted); }
+.bar .ask input { background: transparent; border-color: var(--chrome-line); }
+.bar .ask input::placeholder { color: var(--chrome-muted); }
+.bar .ask button, .bar .icon { background: transparent; border-color: var(--chrome-line); color: var(--chrome-fg); }
+.bar .ask button:hover, .bar .icon:hover { background: rgba(127, 127, 127, 0.18); }
+.menu { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+.menu span { display: block; width: 16px; height: 2px; border-radius: 2px; background: currentColor; }
+.brand { font-weight: 700; font-size: 18px; color: var(--chrome-fg); text-decoration: none; white-space: nowrap; }
 .tag { font: 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; white-space: nowrap; }
 .ask { display: flex; flex: 1 1 auto; min-width: 0; max-width: 520px; margin-left: auto; }
 .ask input {
@@ -87,7 +109,8 @@ button, input, select { font: inherit; color: inherit; }
 .legend:empty { display: none; }
 .legend-title { font-size: 11px; margin-bottom: 6px; }
 .legend .ramp { display: flex; height: 10px; border-radius: 6px; overflow: hidden; }
-.legend .key { display: flex; gap: 10px; margin-top: 8px; font-size: 10.5px; color: var(--muted); }
+.legend .key span { white-space: nowrap; }
+.legend .key { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 10.5px; color: var(--muted); }
 .legend .key i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 .legend .key i.nodata { background: #d9d9d9; }
 :root[data-theme='dark'] .legend .key i.nodata { background: #3a3f42; }
@@ -107,13 +130,13 @@ button, input, select { font: inherit; color: inherit; }
 .panel section:last-child { border-bottom: 0; }
 .panel h2 {
   margin: 0 0 14px; font: 500 11px var(--mono); text-transform: uppercase;
-  letter-spacing: 0.14em; color: var(--muted);
+  letter-spacing: 0.14em; color: var(--accent);
 }
 .panel #detail-title { color: var(--fg); font: 700 18px var(--serif); text-transform: none; letter-spacing: 0; }
 .panel p { margin: 0 0 10px; }
-.hint { font-size: 14px; color: var(--muted); background: var(--hover); border-radius: var(--r); padding: 10px 12px; margin: 4px 0 16px; }
+.hint { font-size: 14px; color: var(--fg); background: var(--accent-soft); border-radius: var(--r); padding: 10px 12px; margin: 4px 0 16px; }
 .soon { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.soon li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--rule); }
+.soon li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--saffron); }
 .soon strong { font-weight: 400; }
 .soon span { font: 12px/1.4 var(--mono); color: var(--muted); }
 .note { color: var(--muted); font-size: 14px; }
@@ -127,7 +150,7 @@ select {
 .switches { display: grid; gap: 4px; margin: 8px 0 16px; }
 .switches label { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; cursor: pointer; }
 .switches label[hidden] { display: none; }
-.switches input { accent-color: var(--link); transform: translateY(1px); }
+.switches input { accent-color: var(--accent); transform: translateY(1px); }
 .switches input:disabled + span { color: var(--muted); }
 .switches small { font: 11px var(--mono); color: var(--muted); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
@@ -156,8 +179,8 @@ body.panel-open .maplibregl-ctrl-bottom-right { right: calc(var(--panel-w) + 2 *
 /* Credits */
 .credits {
   position: fixed; inset: auto 0 0 0; height: var(--foot); z-index: 5;
-  background: var(--bg); border-top: 1px solid var(--rule);
-  font: 10.5px/var(--foot) var(--mono); color: var(--muted); padding: 0 12px;
+  background: var(--chrome); border-top: 1px solid var(--chrome-line);
+  font: 10.5px/var(--foot) var(--mono); color: var(--chrome-muted); padding: 0 12px;
   white-space: nowrap; overflow-x: auto; scrollbar-width: none;
 }
 .credits::-webkit-scrollbar { display: none; }
@@ -181,3 +204,13 @@ body.panel-open .maplibregl-ctrl-bottom-right { right: calc(var(--panel-w) + 2 *
   body.panel-open .legend { display: none; }
   body.panel-open .maplibregl-ctrl-bottom-right { right: 0; bottom: 50vh; }
 }
+
+/* Show by: States / Districts / Pincodes */
+.field-label { font: 11px var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.seg button { flex: 1; height: 36px; border: 0; background: var(--bg); cursor: pointer; font: 500 12px var(--mono); letter-spacing: 0.04em; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[hidden] { display: none; }
+.seg button.on { background: var(--accent); color: #fff; }
+:root[data-theme='dark'] .seg button.on { color: #0e1316; }
+ol.results li::marker { color: var(--saffron); font-family: var(--mono); }

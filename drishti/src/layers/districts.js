@@ -20,7 +20,7 @@ export function classOf(value, breaks) {
   return c;
 }
 
-function fillColor(pal, c) {
+export function fillColor(pal, c) {
   return [
     'case',
     ['boolean', ['feature-state', 'dim'], false], c.dim,
@@ -123,7 +123,7 @@ export async function addDistricts(map, ui) {
   };
 }
 
-function drawLegend(el, m, vals, breaks, pal) {
+export function drawLegend(el, m, vals, breaks, pal) {
   const v = vals.filter((x) => x != null);
   if (!v.length) {
     el.innerHTML = `<div class="legend-title">${esc(m.label)}</div><div class="note">No data for this measure here.</div>`;
@@ -134,7 +134,7 @@ function drawLegend(el, m, vals, breaks, pal) {
     <div class="legend-title">${esc(m.label)}</div>
     <div class="ramp">${pal.map((col, i) => `<span style="background:${col}" title="${esc(m.fmt(edges[i]))} to ${esc(m.fmt(edges[i + 1]))}"></span>`).join('')}</div>
     <div class="ends"><span>${esc(m.fmt(edges[0]))}</span><span>${esc(m.fmt(edges[edges.length - 1]))}</span></div>
-    <div class="key"><span><i style="background:${pal[m.worse === 'low' ? 4 : 0]}"></i>better</span><span><i style="background:${pal[m.worse === 'low' ? 0 : 4]}"></i>worse</span><span><i class="nodata"></i>no data</span></div>
+    <div class="key"><span><i style="background:${pal[m.worse === 'low' ? 4 : 0]}"></i>${esc(m.goodLabel || 'Well served')}</span><span><i style="background:${pal[m.worse === 'low' ? 0 : 4]}"></i>${esc(m.badLabel || 'Underserved')}</span><span><i class="nodata"></i>No data</span></div>
     ${m.note ? `<div class="note">${esc(m.note)}</div>` : ''}`;
 }
 
