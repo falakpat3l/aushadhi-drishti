@@ -118,7 +118,7 @@ export async function startWorld(map, ui, code) {
       ['Aged 65 and over', p.share_65 == null ? 'n/a' : `${n0(p.aged_65_plus)} (${p.share_65}%)`],
       ...(meta.per_pharmacist
         ? [['People per pharmacist (country)', n0(p.people_per_pharmacy)]]
-        : [['Pharmacies on record', n0(p.pharmacies)], ['Pharmacies per 10,000 people', p.per_10k == null ? 'n/a' : p.per_10k.toFixed(2)], ['People per pharmacy', n0(p.people_per_pharmacy)]]),
+        : [['Pharmacies on record', n0(p.pharmacies)], ['Pharmacies per 10,000 people', p.per_10k == null ? 'n/a' : p.per_10k.toFixed(2)], ['People per pharmacy', p.people_per_pharmacy == null && p.people && pts.rows.length ? 'no pharmacy on record' : n0(p.people_per_pharmacy)]]),
     ];
     ui.showDetail(`${p.name}, ${meta.name}`, `<table class="kv">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>`);
     title(measures.find((x) => x.id === sel.value), p.name);
@@ -172,7 +172,7 @@ export function goToCountry(code) {
 }
 
 const SOURCES = {
-  sg: ['Sources: URA planning areas, HSA retail pharmacies (data.gov.sg), SingStat residents June 2026', 'Contains information from data.gov.sg (Singapore Open Data Licence v1.0) and SingStat'],
+  sg: ['Sources: URA planning areas, HSA retail pharmacies (data.gov.sg), SingStat residents by planning area', 'Contains information from data.gov.sg (Singapore Open Data Licence v1.0) and SingStat'],
   nz: ['Sources: Stats NZ Census 2023 (via Figure.NZ), OpenStreetMap, Natural Earth', 'Population: Stats NZ (CC BY 4.0, via Figure.NZ); pharmacies © OpenStreetMap contributors (ODbL); regions: Natural Earth'],
   au: ['Sources: ABS estimated resident population, OpenStreetMap, Natural Earth', 'Population: Australian Bureau of Statistics (CC BY 4.0); pharmacies © OpenStreetMap contributors (ODbL); states: Natural Earth'],
   eu: ['Sources: Eurostat population 2025 and pharmacists by country, GISCO NUTS 2024', 'Population and pharmacists: Eurostat; regions © EuroGeographics for the administrative boundaries'],

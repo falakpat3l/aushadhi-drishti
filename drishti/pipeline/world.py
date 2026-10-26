@@ -41,6 +41,7 @@ NE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geoj
 DATAGOV = "https://api-open.data.gov.sg/v1/public/api/datasets/{}/poll-download"
 SG_AREAS = "d_4765db0e87b9c86336792efe8a1f7a66"        # URA Master Plan 2019 planning areas
 SG_PHARMACIES = "d_bb92615f43de22933e4479558b1f6c36"   # HSA retail pharmacy locations
+SG_CENSUS = "d_d95ae740c0f8961a0b10435836660ce0"       # Census 2020 residents by planning area and age (fallback)
 SG_POPULATION = "https://www.singstat.gov.sg/files/a2b9150d-9ed4-4c0b-ab20-a26035f95065.zip"  # residents by planning area, age, June 2026
 NZ_POPULATION = "https://figure.nz/table/MMRyjOwoiupNd0JF/download"  # Census 2023 by region and age (Stats NZ via Figure.NZ)
 NZ_OSM = "https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf"
@@ -104,6 +105,20 @@ def sg_population(path):
     return out
 
 
+def sg_census(path):
+    """Census 2020 table: one row per planning area ("Bedok - Total") with
+    columns Total_Total and Total_65_69 ... Total_90andOver."""
+    out = {}
+    with open(path, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            name = r["Number"]
+            if not name.endswith(" - Total"):
+                continue
+            old = sum(int(float(r[c] or 0)) for c in r if c.startswith("Total_") and re.match(r"Total_(\d+)", c) and int(re.match(r"Total_(\d+)", c).group(1)) >= 65)
+            out[name[:-8].strip().upper()] = {"people": int(float(r["Total_Total"] or 0)), "aged_65_plus": old}
+    return out
+
+
 def build_sg(args):
     areas = json.loads(datagov(SG_AREAS, "sg_planning_areas.geojson", args).read_text())
     regions = []
@@ -118,7 +133,13 @@ def build_sg(args):
             r.update(pops.get(r["key"], {"people": 0, "aged_65_plus": 0}))
         note("sg_population", True, f"residents by planning area, June 2026 ({sum(r['people'] for r in regions):,} people)")
     except Exception as exc:
-        note("sg_population", False, f"{type(exc).__name__}: no population in this build")
+        try:  # SingStat's own site may turn away automated downloads; use the Census 2020 table on data.gov.sg
+            pops = sg_census(datagov(SG_CENSUS, "sg_census2020.csv", args))
+            for r in regions:
+                r.update(pops.get(r["key"], {"people": 0, "aged_65_plus": 0}))
+            note("sg_population", True, f"Census 2020 residents by planning area (SingStat via data.gov.sg; {type(exc).__name__} on the June 2026 file)")
+        except Exception as exc2:
+            note("sg_population", False, f"{type(exc2).__name__}: no population in this build")
     ph = json.loads(datagov(SG_PHARMACIES, "sg_pharmacies.geojson", args).read_text())
     points = []
     for f in ph["features"]:
@@ -317,7 +338,13 @@ def add_measures(regions, points):
         r["people_per_pharmacy"] = round(n / ph) if n and ph else None
         if not points and r.get("people_per_pharmacist"):
             r["people_per_pharmacy"] = r["people_per_pharmacist"]  # Europe: pharmacists, by country
-    ranks = {k: percentile_ranks([r[k] for r in regions], "high") for k in WEIGHTS}
+    # A region with people but no pharmacy on record counts as the worst on that signal.
+    def ppp(r):
+        if r["people_per_pharmacy"] is not None:
+            return r["people_per_pharmacy"]
+        return r.get("people", 0) * 10 if points and r.get("people") else None
+    ranks = {"people_per_pharmacy": percentile_ranks([ppp(r) for r in regions], "high"),
+             "share_65": percentile_ranks([r["share_65"] for r in regions], "high")}
     for i, r in enumerate(regions):
         parts = {k: ranks[k][i] for k in WEIGHTS if ranks[k][i] is not None}
         r["access_score"] = round(sum(parts[k] * WEIGHTS[k] for k in parts) / sum(WEIGHTS[k] for k in parts), 1) if parts else None

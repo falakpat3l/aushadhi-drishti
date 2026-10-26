@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.11.0
+- Singapore population now falls back to the Census 2020 table on data.gov.sg when SingStat's site turns the build away.
+- Areas with people but no pharmacy on record now count as the least served, instead of having no score.
 - Australia: 8 states and territories, ABS estimated resident population and ages, OpenStreetMap pharmacies.
 - Europe: NUTS 2 regions (2024), Eurostat population and share aged 65+, and people per pharmacist by country.
 

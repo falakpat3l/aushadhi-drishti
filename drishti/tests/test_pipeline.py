@@ -207,6 +207,24 @@ Total 43"""
         self.assertFalse(any("Ramesh" in json.dumps(i) for i in items), "pharmacy names must not be kept")
 
 
+class WorldTest(unittest.TestCase):
+    def test_singapore_census_table(self):
+        import tempfile
+        import world
+        with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False) as t:
+            t.write("Number,Total_Total,Total_60_64,Total_65_69,Total_90andOver\nTotal,9,1,1,1\nBedok - Total,100,10,7,3\nBedok North,50,5,3,1\n")
+        self.assertEqual(world.sg_census(t.name), {"BEDOK": {"people": 100, "aged_65_plus": 10}})
+
+    def test_access_score(self):
+        import world
+        from shapely.geometry import box as b
+        regions = [{"id": i, "name": str(i), "geom": b(i, 0, i + 1, 1), "people": 1000 * (i + 1), "aged_65_plus": 100 * (i + 1)} for i in range(3)]
+        world.add_measures(regions, [[0.5, 0.5, "a"], [0.6, 0.5, "b"], [1.5, 0.5, "c"]])
+        self.assertEqual([r["pharmacies"] for r in regions], [2, 1, 0])
+        self.assertEqual(regions[0]["access_rank"], 3)  # most pharmacies per person: best served
+        self.assertEqual(regions[2]["access_rank"], 1)  # people but no pharmacy: worst served
+
+
 class NppaTest(unittest.TestCase):
     def test_parse_sample_pdf(self):
         rows = nppa.parse_pdf(FIX / "nppa_sample.pdf")
