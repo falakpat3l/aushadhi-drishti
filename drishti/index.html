@@ -33,11 +33,31 @@
 
   <main class="stage">
     <div id="map" aria-label="Map of India"></div>
+    <script>
+      // Arriving from another country: show the last picture of the globe at
+      // once, so the page change does not flash. countries.js fades it out.
+      try {
+        var f = JSON.parse(sessionStorage.getItem('ad-flight') || 'null');
+        if (f && Date.now() - f.at < 15000) {
+          document.body.classList.add('arriving');
+          if (f.snap && f.theme === document.documentElement.dataset.theme) {
+            var img = document.createElement('img');
+            img.id = 'arrive-snap'; img.className = 'arrive-snap'; img.alt = ''; img.src = f.snap;
+            document.currentScript.parentNode.appendChild(img);
+          }
+          var pill = document.createElement('div');
+          pill.className = 'arrive-pill'; pill.textContent = 'Opening ' + (f.name || 'map');
+          document.currentScript.parentNode.appendChild(pill);
+          setTimeout(function () { document.body.classList.remove('arriving'); var s = document.getElementById('arrive-snap'); if (s) s.remove(); }, 9000);
+        }
+      } catch (e) {}
+    </script>
     <nav id="crumbs" class="crumbs" aria-label="Where you are"></nav>
     <div id="legend" class="legend"></div>
   </main>
 
   <aside id="panel" class="panel" aria-label="Map controls">
+    <div id="country-tabs" class="country-tabs"></div>
     <section id="detail-section" hidden>
       <h2 id="detail-title">Details</h2>
       <div id="detail"></div>

@@ -80,3 +80,7 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 ## Version 0.12
 - Added `drishti/src/countries.js`, `drishti/public/basemap/world-land.json` (Natural Earth 110m land, public domain)
 - Changed `src/map.js` (globe, MapLibre 5 CSP build), `src/theme.js`, `src/world.js` (Europe countries level), `src/layers/index.js`, `src/main.js`, `src/style.css`, `pipeline/world.py` (Europe countries), `tests`, `package.json`, `package-lock.json`, CHANGELOG
+
+## Version 0.13
+- Added `drishti/pipeline/hops.py` and its output `drishti/public/basemap/world-countries.json` (country outlines for clicking on the globe: Survey of India outline for India, Natural Earth for the rest)
+- Changed `src/countries.js` (seamless flight, clickable countries), `src/main.js`, `src/map.js`, `src/world.js`, `src/layers/index.js`, `src/style.css`, `index.html`, `pipeline/world.py` (Singapore dashes), `tests/test_pipeline.py`, CHANGELOG

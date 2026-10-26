@@ -56,6 +56,7 @@ drishti/
     build.py            run this to make public/data/ (all of India)
     world.py            run this to make public/data/world/ (Singapore, New Zealand, Australia, Europe)
     basemap.py          run this to remake the map of India (public/basemap/)
+    hops.py             run this to remake the clickable country outlines (public/basemap/world-countries.json)
     config.py           states, URLs, map detail
     fetch.py            polite downloads (robots.txt, one name, cache)
     geo.py              boundaries, which-district-is-this-point

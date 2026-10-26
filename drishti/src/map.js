@@ -26,7 +26,7 @@ export function createMap(container, arriving = null) {
       layers: [{ id: 'sea', type: 'background', paint: { 'background-color': c.sea } }],
     },
     // Arriving from another country: start where the flight left off, zoomed out.
-    ...(arriving ? { center: arriving.center, zoom: 2.4 } : { bounds: INDIA_BOUNDS, fitBoundsOptions: { padding: framePadding() } }),
+    ...(arriving ? { center: arriving.center, zoom: arriving.zoom || 2.2 } : { bounds: INDIA_BOUNDS, fitBoundsOptions: { padding: framePadding() } }),
     minZoom: 1,
     maxZoom: 14,
     pitchWithRotate: false,

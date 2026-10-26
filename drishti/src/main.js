@@ -5,7 +5,7 @@ import { setupPanel } from './ui.js';
 import { registerLayers } from './layers/index.js';
 import { setupAsk } from './ask.js';
 import { startWorld } from './world.js';
-import { arrivingFlight } from './countries.js';
+import { arrivingFlight, countryTabs, clearArrival } from './countries.js';
 
 setupTheme();
 const ui = setupPanel();
@@ -21,6 +21,7 @@ window.__ad = { map, ui, ready: false };
 
 // ?country=sg or ?country=nz opens another country; no country means India.
 const country = new URLSearchParams(window.location.search).get('country');
+countryTabs(document.getElementById('country-tabs'), ['sg', 'nz', 'au', 'eu'].includes(country) ? country : '', map);
 
 map.on('load', () => {
   if (['sg', 'nz', 'au', 'eu'].includes(country)) {
@@ -33,6 +34,7 @@ map.on('load', () => {
       .catch((err) => {
         ui.layerList.innerHTML = `<p class="note">This country's data could not load: ${String(err.message || err)}</p>`;
         window.__ad.ready = true;
+        clearArrival();
         console.error(err);
       });
     return;
@@ -46,6 +48,7 @@ map.on('load', () => {
     .catch((err) => {
       ui.layerList.innerHTML = `<p class="note">Map data could not load: ${String(err.message || err)}</p>`;
       window.__ad.ready = true;
+      clearArrival();
       console.error(err);
     });
 });

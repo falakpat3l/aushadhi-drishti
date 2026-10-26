@@ -7,7 +7,7 @@ import { classBreaks, classOf, fillColor, drawLegend } from './layers/districts.
 import { fitTo } from './map.js';
 import { esc } from './ui.js';
 import { addCredit } from './credits.js';
-import { countryTabs, goToCountry, addWorldLand } from './countries.js';
+import { goToCountry, addWorldLand, addCountryHops, arrive } from './countries.js';
 
 
 const n0 = (v) => (v == null ? 'n/a' : Math.round(v).toLocaleString('en-GB'));
@@ -73,7 +73,6 @@ export async function startWorld(map, ui, code) {
 
   // Panel.
   ui.layerList.innerHTML = `
-    <div id="country-tabs"></div>
     ${groups ? `<div class="field"><label for="w-area">Area</label><select id="w-area"><option value="">All ${esc(meta.name)}</option>${groups.features.map((f) => `<option value="${esc(f.properties.id)}">${esc(f.properties.name)}</option>`).join('')}</select></div>
     <div class="field"><span class="field-label">Show by</span><div class="seg" role="group" aria-label="Show by"><button type="button" data-wlevel="group">Countries</button><button type="button" data-wlevel="region">Regions</button></div></div>` : ''}
     <div class="field"><label for="w-metric">Colour by</label><select id="w-metric">${measures.map((m) => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></div>
@@ -84,7 +83,6 @@ export async function startWorld(map, ui, code) {
     <p class="note">Data built ${esc(meta.built)}. ${esc(pts.label)}.</p>`;
   document.getElementById('soon').innerHTML = (SOON[code] || []).map(([t, why]) => `<li><strong>${esc(t)}</strong><span>${esc(why)}</span></li>`).join('');
   const sel = document.getElementById('w-metric');
-  countryTabs(document.getElementById('country-tabs'), code, map);
   document.getElementById('w-dots-box').addEventListener('change', (e) => map.setLayoutProperty('w-dots', 'visibility', e.target.checked ? 'visible' : 'none'));
 
   let selected = null;
@@ -217,8 +215,16 @@ export async function startWorld(map, ui, code) {
 
   addCredit('world', creditLine(code));
   paint();
-  const [w, s, e, n] = meta.bbox;
-  fitTo(map, [[w, s], [e, n]], !!window.__flight); // fly in when arriving from another country
+  await addCountryHops(map, code);
+  // ?area=DE opens one European country (from a click on the globe).
+  const startArea = new URLSearchParams(window.location.search).get('area');
+  const zoomIn = (animate) => {
+    if (startArea && byGroupCode(startArea)) return pickArea(startArea);
+    const [w, s, e, n] = meta.bbox;
+    fitTo(map, [[w, s], [e, n]], animate);
+  };
+  if (window.__flight) arrive(map, () => zoomIn(true)); // fly in when arriving from another country
+  else zoomIn(false);
   return { meta, open, paint };
 }
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0
+- Seamless country switch: the data fades off the globe, the globe turns to the next country, and the new page picks up from the same picture with no flash, then zooms in.
+- Click or tap a country on the globe to open it. Each country has a marked dot and name; outlines light up on hover. Clicking a European country opens Europe on that country.
+- The country tabs now sit at the top of the menu and stay put while switching; the highlight no longer slides in on every page load.
+- Singapore: census tables write zero as a dash; these now read as 0, so population and access scores load.
+
 ## 0.12.0
 - Singapore: data.gov.sg allows only a few requests a minute; the build now reuses the week's copy, spaces its requests and retries when told to wait.
 - A round globe when zoomed out (MapLibre 5): drag to turn it, the rest of the world in grey.
