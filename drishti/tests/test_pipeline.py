@@ -1,4 +1,5 @@
 """Offline tests for the data build. Run: python3 -m unittest discover tests"""
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -8,7 +9,7 @@ sys.path.insert(0, str(ROOT / "pipeline"))
 
 import geo  # noqa: E402
 import insights  # noqa: E402
-from sources import jak, osm  # noqa: E402
+from sources import cdsco, jak, nppa, osm  # noqa: E402
 
 
 class AnnexureTest(unittest.TestCase):
@@ -96,6 +97,77 @@ class GapScoreTest(unittest.TestCase):
         weights = insights.add_insights(ds)
         self.assertNotIn("outlets_per_10k", weights)
         self.assertAlmostEqual(sum(weights.values()), 1.0, places=2)
+
+
+FIX = ROOT / "tests" / "fixtures"
+
+
+class CdscoTest(unittest.TestCase):
+    def test_titles(self):
+        self.assertEqual(cdsco.month_from_title("NSQ ALERT FOR THE MONTH OF June 2025"), "2025-06")
+        self.assertEqual(cdsco.month_from_title("STATE NSQ ALERT FOR THE MONTH OF MAY-2025"), "2025-05")
+        self.assertEqual(cdsco.kind_from_title("List of spurious Drugs for the month of June-2025"), "spurious")
+        self.assertEqual(cdsco.kind_from_title("STATE NSQ ALERT FOR THE MONTH OF June 2025"), "nsq_state")
+
+    def test_links_from_alerts_page(self):
+        html = """<table><tr><td>6</td><td>CDSCO NSQ ALERT FOR THE MONTH OF June 2025</td><td>2025-Jul-18</td>
+        <td><a href="/opencms/opencms/system/modules/CDSCO.WEB/elements/download_file_division.jsp?num_id=MTI5Mjc=">pdf</a></td></tr>
+        <tr><td>2</td><td>Circular regarding GST</td><td>2025-Oct-08</td>
+        <td><a href="/opencms/opencms/system/modules/CDSCO.WEB/elements/download_file_division.jsp?num_id=MTM0ODc=">pdf</a></td></tr></table>"""
+        links = cdsco.list_alert_links(html)
+        self.assertEqual(len(links), 1)
+        self.assertEqual(links[0]["month"], "2025-06")
+        self.assertTrue(links[0]["url"].startswith("https://cdsco.gov.in/"))
+
+    def test_parse_sample_pdf(self):
+        rows = cdsco.parse_pdf(FIX / "cdsco_sample.pdf")
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["batch"], "PT2401")
+        self.assertIn("Baddi", rows[0]["maker"])
+        self.assertEqual(rows[1]["reason"], "Assay")
+        self.assertEqual(cdsco.find_pincode(rows[0]["maker"]), "173205")
+
+
+class AlertCountsTest(unittest.TestCase):
+    """The published alerts file must hold counts only (CDSCO terms)."""
+
+    class FakePlaces:
+        def coarse(self, address, pincode=None):
+            return (72.97, 21.82, "district", "Bharuch, Gujarat") if "Bharuch" in address else None
+
+        def state_in(self, text):
+            return "Gujarat" if "Gujarat" in text else None
+
+        def state_point(self, name):
+            return (72.23, 22.31)
+
+    def test_counts_only(self):
+        from medicines import summarise
+        rows = [
+            {"product": "Pantoprazole Tablets 40 mg", "batch": "PZ99", "maker": "M/s Example Labs, Bharuch, Gujarat",
+             "reason": "Assay", "reporter": "FDCA Gujarat", "month": "2025-06", "kind": "nsq_state", "src": 0},
+            {"product": "Pantoprazole Tablets 40 mg", "batch": "PZ99", "maker": "M/s Example Labs, Bharuch, Gujarat",
+             "reason": "Assay", "reporter": "FDCA Gujarat", "month": "2025-06", "kind": "nsq_state", "src": 0},
+            {"product": "Amoxycillin Capsules", "batch": "AX1", "maker": "M/s Real Maker, Somewhere",
+             "reason": "Spurious", "reporter": "FDA Gujarat", "month": "2025-06", "kind": "spurious", "src": 0},
+        ]
+        data, unique = summarise(rows, self.FakePlaces(), [{"title": "t", "url": "https://cdsco.gov.in/"}])
+        self.assertEqual(len(unique), 2)
+        self.assertEqual(data["months"][0]["nsq"], 1)
+        self.assertEqual(data["months"][0]["spurious"], 1)
+        self.assertEqual(sum(c[3] for c in data["counts"]), 2)
+        self.assertEqual(data["places"][1][3], "Reported in Gujarat")
+        text = json.dumps(data)
+        for secret in ("Pantoprazole", "PZ99", "Example Labs", "Real Maker", "Assay"):
+            self.assertNotIn(secret, text)
+
+
+class NppaTest(unittest.TestCase):
+    def test_parse_sample_pdf(self):
+        rows = nppa.parse_pdf(FIX / "nppa_sample.pdf")
+        self.assertEqual([r["formulation"] for r in rows], ["Paracetamol", "Pantoprazole"])
+        self.assertEqual(rows[0]["ceiling_rs"], 0.99)
+        self.assertIn("1581", rows[0]["order"])
 
 
 if __name__ == "__main__":

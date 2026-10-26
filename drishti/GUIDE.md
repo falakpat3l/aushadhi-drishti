@@ -33,3 +33,4 @@ GitHub Pages builds the site by itself after each push (see `.github/workflows/d
 ## Where the numbers come from
 
 Run `python3 pipeline/build.py`. It prints one line per source: `[ok]` or `[GAP]` with the reason. A source that fails never stops the build; the map shows what it has and `public/data/meta.json` records the gap.
+

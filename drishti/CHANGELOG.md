@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 (Phase 4)
+- CDSCO drug quality alerts as counts only (CDSCO's terms do not allow copying its lists): per month, per district of the maker's printed address, and per generic name, each linked to the official list. Spurious samples counted only at the reporting state. Map layer with a month timeline.
+- NPPA ceiling price parser and medicine check: brand (from anukalpa) to generic, price cap and how many alert samples mention it.
+- Drafted permission requests to CDSCO and to the Jan Aushadhi programme (PMBI).
+
 ## 0.3.0 (Phase 3)
 - Per district: people per Kendra, Kendras per 1 lakh people, medicine outlets per 10,000 people, government health centres per Kendra.
 - Gap score (0 to 100) showing where a new Jan Aushadhi or generic store would help most, explained in `docs/gap-score.md`. Map opens coloured by it, with a top-5 list.

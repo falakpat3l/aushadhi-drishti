@@ -23,4 +23,43 @@ def layer_switches(page, name):
     page.screenshot(path=f"docs/images/{name}-layers.png")
 
 
-STEPS = [("district detail", district_detail), ("layer switches", layer_switches)]
+def medicine_panel(page, name):
+    """Phase 4: alerts timeline, alert dots and the medicine check, on sample data."""
+    from pathlib import Path
+    fx = Path(__file__).resolve().parent / "fixtures"
+    p2 = page.context.browser.new_page(viewport=page.viewport_size)
+    errors = []
+    p2.on("pageerror", lambda e: errors.append(str(e)))
+    p2.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+    p2.route("**/*", lambda route: _stub(route, fx))
+    p2.goto(page.url, wait_until="networkidle")
+    p2.wait_for_function("window.__ad && window.__ad.ready", timeout=30000)
+    p2.evaluate("window.__ad.ui.open()")
+    p2.wait_for_timeout(400)
+    assert p2.query_selector_all(".timeline span"), "Phase 4: timeline bars missing"
+    p2.check("input[data-layer=alerts]")
+    p2.click(".timeline span >> nth=1")
+    assert "Showing" in p2.inner_text("#alert-timeline"), "Phase 4: month filter did not apply"
+    p2.fill("#med-input", "Dolo 650")
+    p2.click("#med-form button")
+    p2.wait_for_function("document.querySelector('#med-result').innerText.includes('Paracetamol')", timeout=20000)
+    text = p2.inner_text("#med-result")
+    assert "Rs 1.97" in text, "Phase 4: ceiling price not shown"
+    assert "quality alert sample" in text and "mentions Paracetamol" in text, "Phase 4: alert count missing"
+    assert "CDSCO list" in text, "Phase 4: link to the official CDSCO list missing"
+    p2.screenshot(path=f"docs/images/{name}-medicines.png", full_page=False)
+    p2.close()
+    assert not errors, "; ".join(errors)
+
+
+def _stub(route, fx):
+    url = route.request.url
+    if url.endswith("/data/alerts.json"):
+        return route.fulfill(status=200, content_type="application/json", body=(fx / "alerts_sample.json").read_text())
+    if url.endswith("/data/medicines.json"):
+        return route.fulfill(status=200, content_type="application/json", body=(fx / "medicines_sample.json").read_text())
+    from browser_check import stub_outside
+    return stub_outside(route)
+
+
+STEPS = [("district detail", district_detail), ("layer switches", layer_switches), ("medicine panel", medicine_panel)]

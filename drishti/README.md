@@ -28,8 +28,8 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 1 | Fork, keep credit, centre on India, static site for GitHub Pages | Done |
 | 2 | Base layers for Gujarat: districts, population, Jan Aushadhi Kendras, health centres, OSM pharmacies and hospitals, pincode totals | Done |
 | 3 | Insights: people per Kendra, outlets per 10,000 people, and a gap score for where a new generic store helps most ([how it works](docs/gap-score.md)) | Done |
-| 4 | Drug quality alerts and price caps | Next |
-| 5 | Ask the map | |
+| 4 | Medicine layers: CDSCO quality alert counts by district and month, with links to the official lists; medicine check linking a brand (via anukalpa) to its generic, NPPA price cap and alert count | Done (see known gaps) |
+| 5 | Ask the map | Next |
 | 6 | Weekly refresh | |
 
 ## Folder map
@@ -42,6 +42,8 @@ drishti/
     map.js              the map: no API keys, OpenStreetMap tiles
     ui.js               side panel and phone bottom sheet
     credits.js          attribution line, always visible
+    insights.js         gap score and per-person measures
+    medicine.js         alerts layer, timeline, medicine check
     layers/             one file per map layer
   public/               files served as they are (logo, built data)
   pipeline/             data build (Python): download, clean, place, write
@@ -51,15 +53,28 @@ drishti/
     geo.py              boundaries, which-district-is-this-point
     geocode.py          address to position (pincode first, then Nominatim)
     insights.py         per-person numbers and the gap score
+    medicines.py        CDSCO alerts, NPPA prices, anukalpa link
+    places.py           rough position for any Indian address (pincode, district, state)
     sources/            one file per data source
     seeds/              small hand-checked tables (with their sources)
   scripts/              small helper scripts for the build
   tests/                offline data tests and the headless browser check
-  docs/                 research report, screenshots
+  docs/                 research report, gap score, known gaps,
+                        permission request drafts, screenshots
   DATA_SOURCES.md       every data source, licence and fetch method
   ADDED_FILES.md        every file added or changed in this fork
   GUIDE.md              how to run it, in plain steps
 ```
+
+## Screenshots
+
+| Phone (360 px) | Laptop (1280 px) |
+|---|---|
+| ![phone](docs/images/phone-360-medicines.png) | ![laptop](docs/images/desktop-1280-bharuch.png) |
+
+## Known gaps
+
+See [docs/KNOWN_GAPS.md](docs/KNOWN_GAPS.md).
 
 ## Run it on your computer
 

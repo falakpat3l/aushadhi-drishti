@@ -8,6 +8,7 @@ import { esc } from '../ui.js';
 import { addCredit } from '../credits.js';
 import { districtDetail, pincodeDetail } from '../details.js';
 import { rankingHtml } from '../insights.js';
+import { setupMedicines } from '../medicine.js';
 
 export async function registerLayers(viewer, ui) {
   const meta = await loadJSON('meta.json');
@@ -38,6 +39,9 @@ export async function registerLayers(viewer, ui) {
     })),
   };
 
+  // Phase 4: drug quality alerts and the medicine check.
+  layers.alerts = await setupMedicines(viewer, ui);
+
   // Panel: metric chooser and layer switches.
   ui.layerList.innerHTML = `
     <label for="metric">Colour districts by</label>
@@ -48,6 +52,9 @@ export async function registerLayers(viewer, ui) {
       <label><input type="checkbox" data-layer="${k}" ${layers[k].count ? '' : 'disabled'}>
         <span><span class="dot" style="background:${s.color}"></span>${esc(s.label)}
         <small>${layers[k].count ? `${layers[k].count.toLocaleString('en-IN')} on the map` : 'Not available in this build'}</small></span></label>`).join('')}
+    <label><input type="checkbox" data-layer="alerts" ${layers.alerts.count ? '' : 'disabled'}>
+      <span><span class="dot" style="background:#f2b84b"></span>Drug quality alerts (CDSCO)
+      <small>${layers.alerts.count ? `${layers.alerts.count.toLocaleString('en-IN')} samples; spurious ones in purple, at the reporting state` : 'Not available in this build'}</small></span></label>
     <div id="ranking"></div>
     <p class="note" id="data-date"></p>`;
 
@@ -91,7 +98,7 @@ export async function registerLayers(viewer, ui) {
     else if (ad?.kind === 'pincode') ui.showDetail(`Pincode ${ad.props.pincode}`, pincodeDetail(ad.props));
     else if (ad?.kind === 'point') {
       const info = ad.info();
-      ui.showDetail(info.title, table(info.rows, info.html));
+      ui.showDetail(info.title, info.raw || table(info.rows, info.html));
     }
   }, ScreenSpaceEventType.LEFT_CLICK);
 

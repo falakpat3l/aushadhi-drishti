@@ -1,0 +1,5 @@
+{"note":"Counts only (test sample).","kinds":{"N":"Not of standard quality (central labs)","S":"Not of standard quality (state labs)","X":"Spurious (named maker says it did not make it)"},
+"months":[{"m":"2025-05","nsq":1,"spurious":0,"src":[0]},{"m":"2025-06","nsq":1,"spurious":1,"src":[0]}],
+"places":[[76.8397,30.9738,"district","Solan, Himachal Pradesh"],[72.9749,21.8206,"district","Bharuch, Gujarat"],[72.2306,22.307,"state","Reported in Gujarat"]],
+"counts":[["2025-05","N",0,1],["2025-06","S",1,1],["2025-06","X",2,1]],
+"sources":[{"title":"Sample list (test)","url":"https://cdsco.gov.in/"}]}

@@ -36,6 +36,16 @@
       <div id="layer-list" class="layer-list"><p class="muted">No layers yet.</p></div>
       <div id="legend" class="legend"></div>
     </section>
+    <section id="medicine-section" hidden>
+      <h2>Medicines</h2>
+      <form id="med-form" class="ask" autocomplete="off">
+        <label for="med-input" class="sr-only">Brand or generic name</label>
+        <input id="med-input" type="search" placeholder="Brand or generic, e.g. Dolo 650" />
+        <button type="submit">Check</button>
+      </form>
+      <div id="med-result"></div>
+      <div id="alert-timeline"></div>
+    </section>
     <section id="answer-section" hidden>
       <h2>Answer</h2>
       <div id="answer"></div>

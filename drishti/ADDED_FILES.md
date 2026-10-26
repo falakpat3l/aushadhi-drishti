@@ -29,3 +29,10 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/pipeline/insights.py`, `drishti/src/insights.js`, `drishti/docs/gap-score.md`
 - Changed `drishti/pipeline/build.py`, `src/details.js`, `src/layers/index.js`, `src/layers/districts.js`
 - Changed `drishti/tests/test_pipeline.py`, `tests/phase_checks.py`, `README.md`, `CHANGELOG.md`, screenshots
+
+## Phase 4
+- Added `drishti/pipeline/medicines.py`, `pipeline/places.py`, `pipeline/sources/cdsco.py`, `sources/nppa.py`, `sources/anukalpa.py`
+- Added `drishti/src/medicine.js`; changed `src/layers/index.js`, `index.html`, `pipeline/build.py`
+- Added `drishti/tests/fixtures/make_fixtures.py`, `cdsco_sample.pdf`, `nppa_sample.pdf`, `alerts_sample.json`, `medicines_sample.json`; changed `tests/test_pipeline.py`, `tests/phase_checks.py`
+- Added `drishti/docs/permission-requests.md`, `drishti/docs/KNOWN_GAPS.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
+

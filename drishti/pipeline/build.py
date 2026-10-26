@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import geo  # noqa: E402
 import insights  # noqa: E402
+import medicines  # noqa: E402
 from config import CACHE, OUT, SIMPLIFY_DISTRICT, SIMPLIFY_PINCODE, STATES, URLS  # noqa: E402
 from fetch import Blocked, download, fetched_at  # noqa: E402
 from geocode import Geocoder  # noqa: E402
@@ -241,6 +242,7 @@ def main():
         states.append({"name": state.title(), "slug": cfg["slug"], "districts": len(districts), "gap_weights": weights})
 
     OUT.mkdir(parents=True, exist_ok=True)
+    medicines.build_medicines(args, files, note)
     meta = {"built": time.strftime("%Y-%m-%d"), "states": states, "sources": status}
     (OUT / "meta.json").write_text(json.dumps(meta, indent=1))
     print(f"Wrote {OUT}")
