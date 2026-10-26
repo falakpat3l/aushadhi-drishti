@@ -1,0 +1,7 @@
+{"elements": [
+ {"type": "node", "id": 1, "lat": 21.705, "lon": 72.998, "tags": {"amenity": "pharmacy", "name": "Shree Medical", "phone": "99999"}},
+ {"type": "node", "id": 2, "lat": 21.71, "lon": 72.99, "tags": {"amenity": "pharmacy", "name": "Pradhan Mantri Bhartiya Janaushadhi Kendra"}},
+ {"type": "way", "id": 3, "center": {"lat": 21.70, "lon": 73.00}, "tags": {"amenity": "hospital", "name": "Civil Hospital Bharuch"}},
+ {"type": "node", "id": 4, "lat": 21.705, "lon": 72.998, "tags": {"healthcare": "pharmacy"}},
+ {"type": "relation", "id": 5, "tags": {"amenity": "hospital"}}
+]}

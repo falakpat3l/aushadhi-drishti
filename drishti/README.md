@@ -26,8 +26,8 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 |---|---|---|
 | 0 | Research report: [docs/PHASE0_RESEARCH.md](docs/PHASE0_RESEARCH.md) | Done |
 | 1 | Fork, keep credit, centre on India, static site for GitHub Pages | Done |
-| 2 | Base layers for Gujarat | Next |
-| 3 | Insights and gap score | |
+| 2 | Base layers for Gujarat: districts, population, Jan Aushadhi Kendras, health centres, OSM pharmacies and hospitals, pincode totals | Done |
+| 3 | Insights and gap score | Next |
 | 4 | Drug quality alerts and price caps | |
 | 5 | Ask the map | |
 | 6 | Weekly refresh | |
@@ -44,8 +44,16 @@ drishti/
     credits.js          attribution line, always visible
     layers/             one file per map layer
   public/               files served as they are (logo, built data)
+  pipeline/             data build (Python): download, clean, place, write
+    build.py            run this to make public/data/
+    config.py           states, URLs, map detail
+    fetch.py            polite downloads (robots.txt, one name, cache)
+    geo.py              boundaries, which-district-is-this-point
+    geocode.py          address to position (pincode first, then Nominatim)
+    sources/            one file per data source
+    seeds/              small hand-checked tables (with their sources)
   scripts/              small helper scripts for the build
-  tests/                headless browser check (360 px and 1280 px)
+  tests/                offline data tests and the headless browser check
   docs/                 research report, screenshots
   DATA_SOURCES.md       every data source, licence and fetch method
   ADDED_FILES.md        every file added or changed in this fork

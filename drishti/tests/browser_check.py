@@ -26,8 +26,7 @@ BLANK_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAACAUlEQVR42u3TQQ0AAAjEsNOFBBTgXwlvNNCkCpYs1QNvRQIMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA2AAFTAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMAAYAA4ABwABgADAAGAAMgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAADKACBgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADgAEwABgADAAGAAOAAcAAYAAwABgADAAGAAOAAcAAYAAwABgADAAGAAOAAcAAYAAwABgADAAGAAOAAcAAYAAwABgADAAGAAOAAcAAYAAwABgADAAGAAOAAcAAYAC4FpPeDOUAnkcZAAAAAElFTkSuQmCC"
 )
 
-# Extra steps per page, set by later phases: list of (name, function(page)).
-EXTRA_STEPS = []
+from phase_checks import STEPS as EXTRA_STEPS  # extra checks, one per phase
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -57,13 +56,15 @@ def stub_outside(route):
 
 
 def check(width, height, name, port, browser):
+    import os
+    os.chdir(ROOT)
     errors = []
     page = browser.new_page(viewport={"width": width, "height": height})
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.route("**/*", stub_outside)
     page.goto(f"http://127.0.0.1:{port}{BASE}", wait_until="networkidle")
-    page.wait_for_function("window.__ad && window.__ad.viewer && window.__ad.viewer.scene", timeout=20000)
+    page.wait_for_function("window.__ad && window.__ad.ready", timeout=30000)
     page.wait_for_timeout(2500)
     # No sideways scrolling on the page itself.
     overflow = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
