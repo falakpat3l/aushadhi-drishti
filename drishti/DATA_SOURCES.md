@@ -35,6 +35,12 @@ Every source used by aushadhi-drishti is listed here.
 | New Zealand population by region and age (Census 2023) | https://figure.nz/table/MMRyjOwoiupNd0JF (Stats NZ data) | CC BY 4.0 | 16 regions | CSV, weekly; seed table if it fails |
 | New Zealand regions | Natural Earth admin-1 (`ne_10m_admin_1_states_provinces`) | Public domain | 16 regions | GitHub |
 | New Zealand pharmacies | https://download.geofabrik.de/australia-oceania/new-zealand.html | ODbL 1.0 | Volunteer mapped, a floor | Monday refresh, osmium |
+| Australia population by state and age | https://data.api.abs.gov.au (dataflow ERP_Q) | CC BY 4.0 (ABS) | 8 states and territories, latest quarter | ABS Data API, CSV, weekly |
+| Australia states | Natural Earth admin-1 | Public domain | States and territories | GitHub |
+| Australia pharmacies | https://download.geofabrik.de/australia-oceania/australia.html | ODbL 1.0 | Volunteer mapped, a floor | Monday refresh, osmium |
+| Europe regions (NUTS 2, 2024) | https://gisco-services.ec.europa.eu/distribution/v2/nuts/ | Free reuse with credit: "© EuroGeographics for the administrative boundaries" | EU, EFTA and candidate countries (mainland and islands; overseas regions left out) | GeoJSON, weekly |
+| Europe population and people aged 65+ by NUTS 2 | Eurostat `demo_r_pjanaggr3` | Eurostat reuse policy (free, with credit) | 1 January, latest year | SDMX-CSV, weekly |
+| Europe pharmacists | Eurostat `hlth_rs_prs1` (inhabitants per pharmacist, practising where available) | Eurostat reuse policy | By country only | SDMX-CSV, weekly |
 
 ## Planned
 

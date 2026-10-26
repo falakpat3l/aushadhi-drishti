@@ -20,7 +20,7 @@ window.__ad = { map, ui, ready: false };
 const country = new URLSearchParams(window.location.search).get('country');
 
 map.on('load', () => {
-  if (country === 'sg' || country === 'nz') {
+  if (['sg', 'nz', 'au', 'eu'].includes(country)) {
     document.querySelector('.tag').textContent = 'medicine access';
     startWorld(map, ui, country)
       .then((w) => {

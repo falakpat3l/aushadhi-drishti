@@ -46,9 +46,17 @@ NZ_POPULATION = "https://figure.nz/table/MMRyjOwoiupNd0JF/download"  # Census 20
 NZ_OSM = "https://download.geofabrik.de/australia-oceania/new-zealand-latest.osm.pbf"
 WEIGHTS = {"people_per_pharmacy": 0.6, "share_65": 0.4}
 
+AU_POPULATION = "https://data.api.abs.gov.au/rest/data/ABS,ERP_Q,1.0.0/all?startPeriod={}&format=csvfilewithlabels"
+AU_OSM = "https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf"
+EU_REGIONS = "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_20M_2024_4326_LEVL_2.geojson"
+EU_POPULATION = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/demo_r_pjanaggr3/A.NR.T.TOTAL+Y_GE65.?format=SDMX-CSV&startPeriod={}"
+EU_PHARMACISTS = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/hlth_rs_prs1/A.HAB_P..OC2262.?format=SDMX-CSV&startPeriod=2015"
+
 COUNTRIES = {
     "sg": {"name": "Singapore", "iso3": "SGP", "bbox": [103.55, 1.13, 104.15, 1.50], "unit": "planning area"},
     "nz": {"name": "New Zealand", "iso3": "NZL", "bbox": [165.8, -47.5, 179.0, -34.0], "unit": "region"},
+    "au": {"name": "Australia", "iso3": "AUS", "bbox": [112.5, -44.0, 154.0, -10.0], "unit": "state or territory"},
+    "eu": {"name": "Europe", "iso3": None, "bbox": [-25.0, 34.0, 45.0, 71.5], "unit": "region (NUTS 2)"},
 }
 
 status = {}
@@ -165,28 +173,131 @@ def build_nz(args):
         r.update(pops.get(name, {"people": 0, "aged_65_plus": 0}))
         regions.append(r)
     note("nz_regions", True, f"{len(regions)} regions (Natural Earth)")
-    points = []
-    last = CACHE / "osm_nz_last_good.json"
+    points = osm_pharmacies("nz", NZ_OSM, args)
+    return regions, points, "Pharmacies in OpenStreetMap (via Geofabrik)"
+
+
+# ---------- Australia ----------
+
+def au_population(args):
+    """Latest estimated resident population by state: total and aged 65+ (ABS)."""
+    start = f"{time.gmtime().tm_year - 1}-Q1"
+    path = download(AU_POPULATION.format(start), name="au_population.csv", refresh=args.refresh, offline=args.offline,
+                    headers={"Accept": "text/csv"}, timeout=180)
+    rows = [r for r in csv.DictReader(io.StringIO(path.read_text(encoding="utf-8-sig")))
+            if r["Measure"].strip().lower().startswith("estimated resident population") and r["Sex"].strip().lower() == "persons"]
+    latest = max(r["TIME_PERIOD"] for r in rows)
+    out = {}
+    for r in rows:
+        if r["TIME_PERIOD"] != latest:
+            continue
+        d = out.setdefault(r["Region"].strip(), {"people": 0, "aged_65_plus": 0})
+        code = r["AGE"].strip()
+        v = int(float(r["OBS_VALUE"] or 0))
+        if code in ("TT", "TOT") or r["Age"].strip().lower() in ("all ages", "total"):
+            d["people"] = v
+        elif code.isdigit() and int(code) >= 65:
+            d["aged_65_plus"] += v  # single years of age, 65 to 100 and over
+    note("au_population", True, f"ABS estimated resident population, {latest}", fetched_at(path))
+    return out
+
+
+def osm_pharmacies(code, url, args):
+    """Pharmacies from a Geofabrik extract, re-read only on the weekly refresh."""
+    last = CACHE / f"osm_{code}_last_good.json"
     items = None
     if not args.offline and osm.osmium_ready() and (args.refresh or not last.exists()):
         work = PIPELINE / ".osm-work"
         try:
-            pbf = download(NZ_OSM, name="nz.osm.pbf", refresh=True, timeout=1800, folder=work)
+            pbf = download(url, name=f"{code}.osm.pbf", refresh=True, timeout=3600, folder=work)
             items = osm.extract(pbf, work)
             last.write_text(json.dumps(items))
-            note("nz_osm", True, f"{len(items)} pharmacies and hospitals (Geofabrik)")
+            note(f"{code}_osm", True, f"{len(items)} pharmacies and hospitals (Geofabrik)")
         except Exception as exc:
-            note("nz_osm", False, f"{type(exc).__name__}")
+            note(f"{code}_osm", False, f"{type(exc).__name__}")
         finally:
             shutil.rmtree(work, ignore_errors=True)
     if items is None and last.exists():
         items = json.loads(last.read_text())
-        note("nz_osm", True, "used this week's copy")
+        note(f"{code}_osm", True, "used this week's copy")
     if items is None:
-        note("nz_osm", False, "no OpenStreetMap data in this build")
+        note(f"{code}_osm", False, "no OpenStreetMap data in this build")
         items = []
-    points = [[it["lon"], it["lat"], it["osm"]] for it in items if it["kind"] == "pharmacy"]
-    return regions, points, "Pharmacies in OpenStreetMap (via Geofabrik)"
+    return [[it["lon"], it["lat"], it["osm"]] for it in items if it["kind"] == "pharmacy"]
+
+
+def build_au(args):
+    admin1 = json.loads(download(f"{NE}/ne_10m_admin_1_states_provinces.geojson", name="ne_10m_admin_1.geojson", offline=args.offline).read_text())
+    try:
+        pops = au_population(args)
+    except Exception as exc:
+        pops = {}
+        note("au_population", False, f"{type(exc).__name__}: no population in this build")
+    regions = []
+    for f in admin1["features"]:
+        p = f["properties"]
+        if p.get("adm0_a3") != "AUS" or p.get("type_en") not in ("State", "Territory"):
+            continue  # skips small external territories
+        name = p["name"]
+        r = {"id": name.lower().replace(" ", "-"), "name": name, "geom": shape(f["geometry"]).buffer(0)}
+        r.update(pops.get(name, {"people": 0, "aged_65_plus": 0}))
+        regions.append(r)
+    note("au_regions", True, f"{len(regions)} states and territories (Natural Earth)")
+    return regions, osm_pharmacies("au", AU_OSM, args), "Pharmacies in OpenStreetMap (via Geofabrik)"
+
+
+# ---------- Europe ----------
+
+def eurostat_rows(url, name, args):
+    path = download(url, name=name, refresh=args.refresh, offline=args.offline, timeout=180)
+    return list(csv.DictReader(io.StringIO(path.read_text(encoding="utf-8-sig"))))
+
+
+def build_eu(args):
+    """NUTS 2 regions: people and the share aged 65+ (2025). Pharmacists are
+    only published by country, so each region carries its country's figure."""
+    nuts = json.loads(download(EU_REGIONS, name="eu_nuts2.geojson", refresh=args.refresh, offline=args.offline, timeout=180).read_text())
+    area = box(*COUNTRIES["eu"]["bbox"])
+    regions = []
+    for f in nuts["features"]:
+        p = f["properties"]
+        g = shape(f["geometry"]).buffer(0)
+        if not g.intersects(area):
+            continue  # leaves out overseas regions (for example French Guiana)
+        regions.append({"id": p["NUTS_ID"], "name": p.get("NAME_LATN") or p["NUTS_ID"], "country": p["CNTR_CODE"], "geom": g})
+    note("eu_regions", True, f"{len(regions)} NUTS 2 regions (GISCO, 2024)")
+    try:
+        rows = eurostat_rows(EU_POPULATION.format(time.gmtime().tm_year - 2), "eu_population.csv", args)
+        latest = max(r["TIME_PERIOD"] for r in rows)
+        pops = {}
+        for r in rows:
+            if r["TIME_PERIOD"] != latest or not r["OBS_VALUE"]:
+                continue
+            d = pops.setdefault(r["geo"], {"people": 0, "aged_65_plus": 0})
+            d["people" if r["age"] == "TOTAL" else "aged_65_plus"] = int(float(r["OBS_VALUE"]))
+        for r in regions:
+            r.update(pops.get(r["id"], {"people": 0, "aged_65_plus": 0}))
+        note("eu_population", True, f"Eurostat population on 1 January {latest}")
+    except Exception as exc:
+        note("eu_population", False, f"{type(exc).__name__}: no population in this build")
+    try:
+        rows = eurostat_rows(EU_PHARMACISTS, "eu_pharmacists.csv", args)
+        best = {}
+        for r in rows:  # prefer practising pharmacists; take each country's latest year
+            if not r["OBS_VALUE"] or len(r["geo"]) != 2:
+                continue
+            rank = {"PRACT": 3, "PROACT": 2, "LIC": 1}.get(r["wstatus"], 0)
+            key = (rank, r["TIME_PERIOD"])
+            if r["geo"] not in best or key > best[r["geo"]][0]:
+                best[r["geo"]] = (key, float(r["OBS_VALUE"]))
+        country = {"EL": "GR"}
+        for r in regions:
+            hit = best.get(r["country"]) or best.get(country.get(r["country"], ""))
+            r["people_per_pharmacist"] = round(hit[1]) if hit else None
+        note("eu_pharmacists", True, f"inhabitants per pharmacist for {len(best)} countries (Eurostat)")
+    except Exception as exc:
+        note("eu_pharmacists", False, f"{type(exc).__name__}: no pharmacist figures in this build")
+    return regions, [], "Pharmacists per country (Eurostat); no pharmacy dots for Europe"
 
 
 # ---------- shared ----------
@@ -202,8 +313,10 @@ def add_measures(regions, points):
     for r in regions:
         n, ph, old = r.get("people", 0), r["pharmacies"], r.get("aged_65_plus", 0)
         r["share_65"] = round(old / n * 100, 1) if n else None
-        r["per_10k"] = round(ph / n * 1e4, 2) if n else None
+        r["per_10k"] = round(ph / n * 1e4, 2) if n and points else None
         r["people_per_pharmacy"] = round(n / ph) if n and ph else None
+        if not points and r.get("people_per_pharmacist"):
+            r["people_per_pharmacy"] = r["people_per_pharmacist"]  # Europe: pharmacists, by country
     ranks = {k: percentile_ranks([r[k] for r in regions], "high") for k in WEIGHTS}
     for i, r in enumerate(regions):
         parts = {k: ranks[k][i] for k in WEIGHTS if ranks[k][i] is not None}
@@ -223,7 +336,7 @@ def basemap(cfg, args):
         g = shape(f["geometry"]).buffer(0)
         if not g.intersects(area):
             continue
-        g = g.intersection(area).simplify(0.002, preserve_topology=True)
+        g = g.intersection(area).simplify(0.002 if cfg["bbox"][2] - cfg["bbox"][0] < 20 else 0.02, preserve_topology=True)
         if f["properties"].get("ADM0_A3") == cfg["iso3"]:
             own = g
         else:
@@ -241,7 +354,7 @@ def write(code, cfg, regions, points, point_label, base):
         props = {k: v for k, v in r.items() if k not in ("geom", "key")}
         lp = r["geom"].representative_point()
         props["label"] = [round(lp.x, 4), round(lp.y, 4)]
-        feats.append(geo.feature(r["geom"], props, 0.0005 if code == "sg" else 0.005))
+        feats.append(geo.feature(r["geom"], props, {"sg": 0.0005, "nz": 0.005}.get(code, 0.01)))
     (out / "regions.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
     (out / "points.json").write_text(json.dumps({"label": point_label, "rows": points}, separators=(",", ":")))
     (out / "basemap.json").write_text(json.dumps(base, separators=(",", ":")))
@@ -251,6 +364,7 @@ def write(code, cfg, regions, points, point_label, base):
         "name": cfg["name"], "code": code, "unit": cfg["unit"], "built": time.strftime("%Y-%m-%d"),
         "bbox": [round(min(xs), 3), round(min(ys), 3), round(max(xs), 3), round(max(ys), 3)],
         "people": sum(r.get("people", 0) for r in regions), "pharmacies": len(points),
+        "per_pharmacist": not points,  # Europe: the figure is people per pharmacist, by country
         "weights": WEIGHTS, "sources": {k: v for k, v in status.items() if k.startswith(code)},
     }
     (out / "meta.json").write_text(json.dumps(meta, indent=1))
@@ -262,7 +376,7 @@ def main():
     ap.add_argument("--offline", action="store_true")
     args = ap.parse_args()
     built = []
-    for code, fn in (("sg", build_sg), ("nz", build_nz)):
+    for code, fn in (("sg", build_sg), ("nz", build_nz), ("au", build_au), ("eu", build_eu)):
         cfg = COUNTRIES[code]
         try:
             regions, points, label = fn(args)

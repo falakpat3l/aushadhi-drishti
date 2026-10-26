@@ -75,3 +75,4 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 ## Phase 9
 - Added `drishti/pipeline/world.py`, `drishti/pipeline/seeds/world/` (New Zealand population seed), `drishti/src/world.js`
 - Changed `drishti/src/main.js`, `src/layers/index.js` (country switch), `src/style.css`, `tests/phase_checks.py`, `.github/workflows/drishti-pages.yml` (runs world.py), README, DATA_SOURCES, CHANGELOG
+- Phase 9 (Australia, Europe): changed `drishti/pipeline/world.py`, `src/world.js`, `src/main.js`, DATA_SOURCES, README, CHANGELOG

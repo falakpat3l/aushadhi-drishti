@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+- Australia: 8 states and territories, ABS estimated resident population and ages, OpenStreetMap pharmacies.
+- Europe: NUTS 2 regions (2024), Eurostat population and share aged 65+, and people per pharmacist by country.
+
 ## 0.10.0 (Phase 9)
 - Country switch: India, Singapore, New Zealand. Other countries show regions coloured by an access score (people per pharmacy 60%, share aged 65 and over 40%), pharmacy dots, a ranking and details.
 - Singapore: 55 planning areas, HSA retail pharmacies, SingStat residents (June 2026). New Zealand: 16 regions, Census 2023 population, OpenStreetMap pharmacies.

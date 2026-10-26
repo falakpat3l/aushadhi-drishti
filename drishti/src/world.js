@@ -12,6 +12,8 @@ export const COUNTRIES = [
   { code: '', name: 'India' },
   { code: 'sg', name: 'Singapore' },
   { code: 'nz', name: 'New Zealand' },
+  { code: 'au', name: 'Australia' },
+  { code: 'eu', name: 'Europe' },
 ];
 
 const n0 = (v) => (v == null ? 'n/a' : Math.round(v).toLocaleString('en-GB'));
@@ -26,12 +28,18 @@ const MEASURES = [
 // Coming soon, per country: what is not on the map yet and why.
 const SOON = {
   sg: [['Clinic and hospital pharmacies', 'the open list covers retail pharmacies only'], ['GP clinics and polyclinics', 'to be added from the MOH directory']],
+  au: [['Smaller areas (SA4 regions)', 'state level for now; ABS regions to be added'], ['Official pharmacy counts', 'PBS-approved pharmacy numbers by state to be added']],
+  eu: [['Pharmacists by region', 'Eurostat publishes pharmacists per country only, so each region shows its country figure'], ['Pharmacy dots', 'OpenStreetMap for all of Europe is too large for the weekly build']],
   nz: [['Smaller areas (territorial authorities)', 'their boundary files need a free Stats NZ account to download'], ['Official pharmacy list', 'pharmacies come from OpenStreetMap for now']],
 };
 
 export async function startWorld(map, ui, code) {
   const base = `world/${code}/`;
   const [meta, fc, pts, bm] = await Promise.all(['meta.json', 'regions.geojson', 'points.json', 'basemap.json'].map((f) => loadJSON(base + f)));
+  // Europe has pharmacists per country instead of pharmacy locations.
+  const measures = meta.per_pharmacist
+    ? MEASURES.filter((m) => m.id !== 'per_10k').map((m) => (m.id === 'people_per_pharmacy' ? { ...m, label: 'People per pharmacist (country figure)', title: 'How many people share one pharmacist?', sub: 'Country figure, Eurostat' } : m))
+    : MEASURES;
   let c = mapColors();
   map.setMaxBounds(null);
   map.setMinZoom(2);
@@ -64,7 +72,7 @@ export async function startWorld(map, ui, code) {
   // Panel.
   ui.layerList.innerHTML = `
     <div class="field"><label for="country-pick">Country</label><select id="country-pick">${COUNTRIES.map((k) => `<option value="${k.code}" ${k.code === code ? 'selected' : ''}>${k.name}</option>`).join('')}</select></div>
-    <div class="field"><label for="w-metric">Colour by</label><select id="w-metric">${MEASURES.map((m) => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></div>
+    <div class="field"><label for="w-metric">Colour by</label><select id="w-metric">${measures.map((m) => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></div>
     <div class="switches">
       <label><input type="checkbox" id="w-dots-box" ${pts.rows.length ? '' : 'disabled'}><span><i class="dot" style="background:#d4860b"></i>Pharmacies <small>${pts.rows.length ? pts.rows.length.toLocaleString('en-GB') : 'none in this build'}</small></span></label>
     </div>
@@ -77,7 +85,7 @@ export async function startWorld(map, ui, code) {
 
   let selected = null;
   function paint() {
-    const m = MEASURES.find((x) => x.id === sel.value);
+    const m = measures.find((x) => x.id === sel.value);
     const vals = [...byId.values()].map((p) => p[m.id]);
     const breaks = classBreaks(vals);
     const pal = m.worse === 'low' ? [...c.scale].reverse() : c.scale;
@@ -88,7 +96,7 @@ export async function startWorld(map, ui, code) {
     const top = [...byId.entries()].filter(([, p]) => p.access_rank).sort((a, b) => a[1].access_rank - b[1].access_rank).slice(0, 5);
     document.getElementById('ranking').innerHTML = `<p class="note"><strong>Where one more pharmacy would help most</strong></p>
       <ol class="results">${top.map(([id, p]) => `<li><button type="button" data-id="${id}">${esc(p.name)}</button> ${n0(p.access_score)}</li>`).join('')}</ol>
-      <p class="note">Access score: people per pharmacy 60%, share aged 65 and over 40%.</p>`;
+      <p class="note">Access score: people per ${meta.per_pharmacist ? 'pharmacist' : 'pharmacy'} 60%, share aged 65 and over 40%.</p>`;
   }
   function title(m, place) {
     ui.crumbs.innerHTML = `<div class="path"><button type="button" data-go="india">India</button><i>/</i><span>${esc(meta.name)}</span>${place ? `<i>/</i><span>${esc(place)}</span>` : ''}</div>
@@ -108,12 +116,12 @@ export async function startWorld(map, ui, code) {
       ['Access score (0 to 100)', p.access_score == null ? 'n/a' : `${n0(p.access_score)} (rank ${p.access_rank} of ${byId.size})`],
       ['People', n0(p.people)],
       ['Aged 65 and over', p.share_65 == null ? 'n/a' : `${n0(p.aged_65_plus)} (${p.share_65}%)`],
-      ['Pharmacies on record', n0(p.pharmacies)],
-      ['Pharmacies per 10,000 people', p.per_10k == null ? 'n/a' : p.per_10k.toFixed(2)],
-      ['People per pharmacy', n0(p.people_per_pharmacy)],
+      ...(meta.per_pharmacist
+        ? [['People per pharmacist (country)', n0(p.people_per_pharmacy)]]
+        : [['Pharmacies on record', n0(p.pharmacies)], ['Pharmacies per 10,000 people', p.per_10k == null ? 'n/a' : p.per_10k.toFixed(2)], ['People per pharmacy', n0(p.people_per_pharmacy)]]),
     ];
     ui.showDetail(`${p.name}, ${meta.name}`, `<table class="kv">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>`);
-    title(MEASURES.find((x) => x.id === sel.value), p.name);
+    title(measures.find((x) => x.id === sel.value), p.name);
   }
 
   sel.addEventListener('change', paint);
@@ -163,17 +171,14 @@ export function goToCountry(code) {
   window.location.href = url.toString();
 }
 
-function sourceLine(code) {
-  return code === 'sg'
-    ? 'Sources: URA planning areas, HSA retail pharmacies (data.gov.sg), SingStat residents June 2026'
-    : 'Sources: Stats NZ Census 2023 (via Figure.NZ), OpenStreetMap, Natural Earth';
-}
-
-function creditLine(code) {
-  return code === 'sg'
-    ? 'Contains information from data.gov.sg (Singapore Open Data Licence v1.0) and SingStat'
-    : 'Population: Stats NZ (CC BY 4.0, via Figure.NZ); pharmacies © OpenStreetMap contributors (ODbL); regions: Natural Earth';
-}
+const SOURCES = {
+  sg: ['Sources: URA planning areas, HSA retail pharmacies (data.gov.sg), SingStat residents June 2026', 'Contains information from data.gov.sg (Singapore Open Data Licence v1.0) and SingStat'],
+  nz: ['Sources: Stats NZ Census 2023 (via Figure.NZ), OpenStreetMap, Natural Earth', 'Population: Stats NZ (CC BY 4.0, via Figure.NZ); pharmacies © OpenStreetMap contributors (ODbL); regions: Natural Earth'],
+  au: ['Sources: ABS estimated resident population, OpenStreetMap, Natural Earth', 'Population: Australian Bureau of Statistics (CC BY 4.0); pharmacies © OpenStreetMap contributors (ODbL); states: Natural Earth'],
+  eu: ['Sources: Eurostat population 2025 and pharmacists by country, GISCO NUTS 2024', 'Population and pharmacists: Eurostat; regions © EuroGeographics for the administrative boundaries'],
+};
+const sourceLine = (code) => SOURCES[code][0];
+const creditLine = (code) => SOURCES[code][1];
 
 function bboxOf(geom) {
   let w = 180, s = 90, e = -180, n = -90;
