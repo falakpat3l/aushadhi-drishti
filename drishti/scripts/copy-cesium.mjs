@@ -1,3 +1,4 @@
+// NOT USED since version 0.8 (the map moved from CesiumJS to MapLibre). Kept so nothing is deleted.
 // Copies the static files Cesium needs at run time (web workers, images,
 // widget styles) into public/cesium, so Vite serves and ships them.
 // public/cesium is git-ignored: it is rebuilt from node_modules each time.

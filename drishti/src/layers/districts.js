@@ -1,7 +1,7 @@
 // District shapes, coloured by the chosen measure. Tap or click a district
 // for details.
 import { loadJSON } from '../data.js';
-import { METRICS, metricById } from '../metrics.js';
+import { METRICS, metricById, aboutMetric } from '../metrics.js';
 import { esc } from '../ui.js';
 import { mapColors, onThemeChange } from '../theme.js';
 import { BEFORE } from './basemap.js';
@@ -44,6 +44,7 @@ export async function addDistricts(map, ui) {
   let current = 'gap_score';
   let focus = null;
   let selected = null;
+  let visible = true; // only the layer on screen draws the legend
 
   map.addLayer({ id: 'districts-fill', type: 'fill', source: 'districts', paint: { 'fill-color': fillColor(c.scale, c), 'fill-opacity': 0.92 } }, BEFORE);
   map.addLayer({ id: 'districts-line', type: 'line', source: 'districts', paint: { 'line-color': c.districtLine, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.3, 8, 1] } }, BEFORE);
@@ -72,7 +73,7 @@ export async function addDistricts(map, ui) {
       map.setFeatureState({ source: 'districts', id: p.lgd }, { cls: classOf(m.get(p), breaks), dim: !inView(p) });
     }
     map.setPaintProperty('districts-fill', 'fill-color', fillColor(pal, c));
-    drawLegend(ui.legend, m, vals, breaks, pal);
+    if (visible) drawLegend(ui.legend, { ...m, source: aboutMetric(m.id).source }, vals, breaks, pal);
   }
 
   // Hover outline (mouse only).
@@ -118,6 +119,7 @@ export async function addDistricts(map, ui) {
       if (lgd != null) map.setFeatureState({ source: 'districts', id: lgd }, { selected: true });
     },
     setVisible(on) {
+      visible = on;
       for (const id of ['districts-fill', 'districts-line']) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
     },
   };
@@ -135,7 +137,7 @@ export function drawLegend(el, m, vals, breaks, pal) {
     <div class="ramp">${pal.map((col, i) => `<span style="background:${col}" title="${esc(m.fmt(edges[i]))} to ${esc(m.fmt(edges[i + 1]))}"></span>`).join('')}</div>
     <div class="ends"><span>${esc(m.fmt(edges[0]))}</span><span>${esc(m.fmt(edges[edges.length - 1]))}</span></div>
     <div class="key"><span><i style="background:${pal[m.worse === 'low' ? 4 : 0]}"></i>${esc(m.goodLabel || 'Well served')}</span><span><i style="background:${pal[m.worse === 'low' ? 0 : 4]}"></i>${esc(m.badLabel || 'Underserved')}</span><span><i class="nodata"></i>No data</span></div>
-    ${m.note ? `<div class="note">${esc(m.note)}</div>` : ''}`;
+    ${m.source ? `<div class="source">${esc(m.source)}</div>` : ''}`;
 }
 
 export function metricOptions() {

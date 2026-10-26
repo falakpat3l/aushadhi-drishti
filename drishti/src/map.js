@@ -45,7 +45,7 @@ export function framePadding() {
   const panel = document.getElementById('panel');
   const open = panel?.classList.contains('open');
   if (window.innerWidth <= 700) {
-    return { top: 56, left: 16, right: 16, bottom: open ? Math.round(window.innerHeight * 0.5) + 16 : 40 };
+    return { top: 56, left: 16, right: 16, bottom: open ? Math.round(window.innerHeight * 0.42) + 16 : 40 };
   }
   return { top: 64, left: 40, bottom: 48, right: open ? (panel.offsetWidth || 380) + 56 : 40 };
 }

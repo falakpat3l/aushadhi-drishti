@@ -1,7 +1,7 @@
 // States and UTs as one shape each, coloured by the same measures as districts
 // (numbers added up from the districts, and a gap score among states).
 import { loadJSON } from '../data.js';
-import { metricById } from '../metrics.js';
+import { metricById, aboutMetric } from '../metrics.js';
 import { mapColors, onThemeChange } from '../theme.js';
 import { classBreaks, classOf, fillColor, drawLegend } from './districts.js';
 
@@ -21,7 +21,7 @@ export async function addStates(map, ui) {
     const pal = m.worse === 'low' ? [...c.scale].reverse() : c.scale;
     for (const [slug, p] of bySlug) map.setFeatureState({ source: 'states', id: ids.get(slug) }, { cls: classOf(m.get(p), breaks) });
     map.setPaintProperty('states-fill', 'fill-color', fillColor(pal, c));
-    drawLegend(ui.legend, { ...m, note: m.id === 'gap_score' ? 'Compared with all states and UTs.' : m.note }, vals, breaks, pal);
+    drawLegend(ui.legend, { ...m, source: aboutMetric(m.id).source }, vals, breaks, pal);
   }
   onThemeChange(() => {
     c = mapColors();

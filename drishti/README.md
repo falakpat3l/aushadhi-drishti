@@ -64,7 +64,7 @@ drishti/
     seeds/              small hand-checked tables (with their sources)
   scripts/              small helper scripts for the build
   tests/                offline data tests and the headless browser check
-  docs/                 research report, gap score, stock-sharing design, known gaps,
+  docs/                 how the code works, research report, gap score, stock-sharing design, known gaps,
                         permission request drafts, screenshots
   DATA_SOURCES.md       every data source, licence and fetch method
   ADDED_FILES.md        every file added or changed in this fork

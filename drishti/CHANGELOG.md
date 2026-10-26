@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0
+- Title card on the map, in the style of a news chart: where you are, a plain headline, one line of context. Each legend ends with its source.
+- Fixed: the legend could show district colours while states or pincodes were on screen. Pincodes now have their own legend.
+- Phones: smaller title card and bottom sheet, so more of the map shows.
+- New `docs/HOW_THE_CODE_WORKS.md`: a plain tour of the code.
+- Synced with 57 new God's Eye View commits from upstream (outside `drishti/`).
+
 ## 0.8.2
 - Show by States, Districts or Pincodes. States get the same measures added up from their districts and a gap score among states.
 - Menu button (three lines) instead of the word Panel; the panel is open by default.

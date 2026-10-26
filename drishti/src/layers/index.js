@@ -13,6 +13,7 @@ import { addCredit } from '../credits.js';
 import { districtDetail, pincodeDetail } from '../details.js';
 import { rankingHtml } from '../insights.js';
 import { setupMedicines } from '../medicine.js';
+import { aboutMetric } from '../metrics.js';
 import { resetView, fitTo } from '../map.js';
 
 const EMPTY = { jak: [], pharmacy: [], hospital: [], gov: [] };
@@ -22,7 +23,7 @@ export async function registerLayers(map, ui) {
   const meta = await loadJSON('meta.json');
   await addBasemap(map);
   const districts = await addDistricts(map, ui);
-  const pincodes = pincodeLayer(map);
+  const pincodes = pincodeLayer(map, ui);
   const states = await addStates(map, ui);
   let level = 'district'; // 'state', 'district' or 'pincode'
   const stateBySlug = new Map(meta.states.map((s) => [s.slug, s]));
@@ -79,11 +80,19 @@ export async function registerLayers(map, ui) {
   const metricSel = $('#metric');
   const statePick = $('#state-pick');
 
-  function crumbs(district) {
+  // The title card on the map: where you are, a plain headline, one line of context.
+  let openName = null;
+  function crumbs(district = openName) {
+    openName = district;
     const parts = [`<button type="button" data-go="india">India</button>`];
     if (current) parts.push(`<button type="button" data-go="state">${esc(current.name)}</button>`);
     if (district) parts.push(`<span>${esc(district)}</span>`);
-    ui.crumbs.innerHTML = parts.join('<i>/</i>');
+    const a = aboutMetric(level === 'pincode' ? 'outlets_per_10k' : metricSel.value);
+    const by = { state: 'By state', district: 'By district', pincode: 'By pincode' }[level];
+    const title = level === 'pincode' ? 'Where are the medicine outlets?' : a.title;
+    ui.crumbs.innerHTML = `<div class="path">${parts.join('<i>/</i>')}</div>
+      <h1>${esc(title)}</h1>
+      <p>${esc(by)}${current ? `, ${esc(current.name)}` : ', India'}. ${esc(level === 'pincode' ? 'Kendras plus mapped pharmacies' : a.sub)}</p>`;
   }
 
   function setLevel(l) {
@@ -95,6 +104,7 @@ export async function registerLayers(map, ui) {
     if (l === 'state') states.paint(metricSel.value);
     else districts.paint(metricSel.value);
     drawRanking();
+    crumbs();
   }
 
   function drawRanking() {
@@ -228,7 +238,11 @@ export async function registerLayers(map, ui) {
     if (go === 'state' && current) pickState(current.slug);
   });
   metricSel.value = districts.metric;
-  metricSel.addEventListener('change', () => (level === 'state' ? states.paint(metricSel.value) : districts.paint(metricSel.value)));
+  metricSel.addEventListener('change', () => {
+    if (level === 'state') states.paint(metricSel.value);
+    else districts.paint(metricSel.value);
+    crumbs();
+  });
   ui.layerList.querySelectorAll('button[data-level]').forEach((b) => b.addEventListener('click', () => setLevel(b.dataset.level)));
   statePick.addEventListener('change', () => pickState(statePick.value));
   ui.layerList.querySelectorAll('input[data-layer]').forEach((box) => {

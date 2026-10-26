@@ -67,3 +67,7 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 
 ## Phase 8 views
 - Added `drishti/src/layers/states.js`; changed `pipeline/build.py` (writes `states.geojson`), `index.html`, `src/style.css`, `src/ui.js`, `src/metrics.js`, `src/layers/index.js`, `layers/districts.js`, `tests/phase_checks.py`, `CHANGELOG.md`
+
+## Version 0.9
+- Merged upstream God's Eye View (57 commits, outside `drishti/`; root README kept with our header)
+- Added `drishti/docs/HOW_THE_CODE_WORKS.md`; changed `src/metrics.js`, `src/layers/index.js`, `layers/districts.js`, `layers/states.js`, `layers/pincodes.js`, `src/style.css`, `src/map.js`, `CHANGELOG.md`; marked `src/cesiumBase.js` and `scripts/copy-cesium.mjs` as not used
