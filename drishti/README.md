@@ -33,6 +33,7 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 5 | Ask the map: plain questions answered from the local data by rules; optional local AI with a key in `.env` | Done |
 | 6 | Weekly refresh (GitHub Actions, Mondays) and a design for opt-in stock sharing ([design doc](docs/design-opt-in-stock-sharing.md)) | Done |
 | 7 | All of India, the official map of India, OpenStreetMap data from Geofabrik, state picker | Done |
+| 9 | Other countries: Singapore and New Zealand (country switch; access score from people per pharmacy and share aged 65+) | Done |
 
 ## Folder map
 
@@ -41,6 +42,7 @@ drishti/
   index.html            the page
   src/                  map code (MapLibre GL, plain JavaScript)
     theme.js            light and dark mode
+    world.js            the view for other countries
     main.js             starts everything
     map.js              the map: no API keys, no street-map tiles
     ui.js               side panel and phone bottom sheet
@@ -52,6 +54,7 @@ drishti/
   public/               files served as they are (logo, map of India, built data)
   pipeline/             data build (Python): download, clean, place, write
     build.py            run this to make public/data/ (all of India)
+    world.py            run this to make public/data/world/ (Singapore, New Zealand)
     basemap.py          run this to remake the map of India (public/basemap/)
     config.py           states, URLs, map detail
     fetch.py            polite downloads (robots.txt, one name, cache)

@@ -83,6 +83,7 @@ button, input, select { font: inherit; color: inherit; }
   flex: 1; min-width: 0; height: 34px; padding: 0 14px;
   background: var(--bg); border: 1px solid var(--line); border-right: 0; border-radius: var(--r) 0 0 var(--r);
 }
+.ask[hidden] { display: none; }
 .ask input:focus { outline: 2px solid var(--link); outline-offset: -2px; }
 .ask > button { border-radius: 0 var(--r) var(--r) 0; }
 .ask button, .panel-toggle, .icon {

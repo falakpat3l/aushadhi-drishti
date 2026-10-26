@@ -25,6 +25,17 @@ Every source used by aushadhi-drishti is listed here.
 | Fonts: Inter, JetBrains Mono | https://fonts.google.com | SIL Open Font License | n/a | n/a | Loaded by the visitor's browser | Phase 1 |
 | Map code base | https://github.com/bilawalsidhu/gods-eye-view | MIT (code only). Its bundled data is not used by this app | n/a | n/a | GitHub fork; original files kept unchanged outside `drishti/` | Phase 1 |
 
+## Other countries (Phase 9)
+
+| Source | URL | Licence / terms | Coverage | How fetched |
+|---|---|---|---|---|
+| Singapore planning areas (URA Master Plan 2019) | https://data.gov.sg/datasets/d_4765db0e87b9c86336792efe8a1f7a66/view | Singapore Open Data Licence v1.0 | 55 planning areas | data.gov.sg download link, weekly |
+| Singapore retail pharmacies (HSA) | https://data.gov.sg/datasets/d_bb92615f43de22933e4479558b1f6c36/view | Singapore Open Data Licence v1.0 | About 250 retail pharmacies (company names only; the licensed-pharmacy list with pharmacist names is not used) | weekly |
+| Singapore residents by planning area and age (June 2026) | https://www.singstat.gov.sg/find-data/explore-data-themes/population/geographic-distribution/latest-news-data | SingStat terms: free reuse with source | All planning areas | CSV in a zip, weekly |
+| New Zealand population by region and age (Census 2023) | https://figure.nz/table/MMRyjOwoiupNd0JF (Stats NZ data) | CC BY 4.0 | 16 regions | CSV, weekly; seed table if it fails |
+| New Zealand regions | Natural Earth admin-1 (`ne_10m_admin_1_states_provinces`) | Public domain | 16 regions | GitHub |
+| New Zealand pharmacies | https://download.geofabrik.de/australia-oceania/new-zealand.html | ODbL 1.0 | Volunteer mapped, a floor | Monday refresh, osmium |
+
 ## Planned
 
 | Source | URL | Licence / terms | Note |

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 (Phase 9)
+- Country switch: India, Singapore, New Zealand. Other countries show regions coloured by an access score (people per pharmacy 60%, share aged 65 and over 40%), pharmacy dots, a ranking and details.
+- Singapore: 55 planning areas, HSA retail pharmacies, SingStat residents (June 2026). New Zealand: 16 regions, Census 2023 population, OpenStreetMap pharmacies.
+
 ## 0.9.0
 - Title card on the map, in the style of a news chart: where you are, a plain headline, one line of context. Each legend ends with its source.
 - Fixed: the legend could show district colours while states or pincodes were on screen. Pincodes now have their own legend.

@@ -58,6 +58,11 @@ jobs:
           else
             python pipeline/build.py
           fi
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.refresh }}" = "true" ]; then
+            python pipeline/world.py --refresh
+          else
+            python pipeline/world.py
+          fi
       - name: Upload data notes (which sources worked)
         uses: actions/upload-artifact@v4
         with:

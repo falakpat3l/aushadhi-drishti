@@ -71,3 +71,7 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 ## Version 0.9
 - Merged upstream God's Eye View (57 commits, outside `drishti/`; root README kept with our header)
 - Added `drishti/docs/HOW_THE_CODE_WORKS.md`; changed `src/metrics.js`, `src/layers/index.js`, `layers/districts.js`, `layers/states.js`, `layers/pincodes.js`, `src/style.css`, `src/map.js`, `CHANGELOG.md`; marked `src/cesiumBase.js` and `scripts/copy-cesium.mjs` as not used
+
+## Phase 9
+- Added `drishti/pipeline/world.py`, `drishti/pipeline/seeds/world/` (New Zealand population seed), `drishti/src/world.js`
+- Changed `drishti/src/main.js`, `src/layers/index.js` (country switch), `src/style.css`, `tests/phase_checks.py`, `.github/workflows/drishti-pages.yml` (runs world.py), README, DATA_SOURCES, CHANGELOG

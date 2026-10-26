@@ -15,6 +15,8 @@ Run `python3 pipeline/build.py`. It does this, top to bottom:
 7. **Medicines** (`medicines.py`): CDSCO alert counts, NPPA prices, and the brand list from anukalpa.
 8. **Write** small files to `public/data/`: `districts.geojson`, `states.geojson`, one folder per state (`states/<state>/points.json`, `pincodes.geojson`), and `meta.json` (which sources worked).
 
+Other countries (Singapore, New Zealand) are built by `pipeline/world.py` into `public/data/world/`, and drawn by `src/world.js` when the page address ends in `?country=sg` or `?country=nz`.
+
 The background map of India (`public/basemap/`) is made once by `pipeline/basemap.py` from the Survey of India outline.
 
 ## 2. The web page (`index.html` and `src/`)
