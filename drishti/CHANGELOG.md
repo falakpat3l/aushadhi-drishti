@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0
+- First major release: all of India with the official map, Singapore, New Zealand, Australia and Europe on one rotatable globe, a seamless country switch and clickable countries. Everything since 0.6.0 is listed below.
+
 ## 0.13.0
 - Seamless country switch: the data fades off the globe, the globe turns to the next country, and the new page picks up from the same picture with no flash, then zooms in.
 - Click or tap a country on the globe to open it. Each country has a marked dot and name; outlines light up on hover. Clicking a European country opens Europe on that country.
