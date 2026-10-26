@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.12.0
+- Singapore: data.gov.sg allows only a few requests a minute; the build now reuses the week's copy, spaces its requests and retries when told to wait.
 - A round globe when zoomed out (MapLibre 5): drag to turn it, the rest of the world in grey.
 - Country tabs with a sliding highlight replace the country list; switching countries flies across the globe.
 - Europe: countries act like India's states. Show by Countries or Regions, or pick a country to see its regions.

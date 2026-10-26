@@ -70,10 +70,22 @@ def note(key, ok, detail="", fetched=None):
 
 
 def datagov(dataset, name, args):
-    """data.gov.sg gives a short-lived link to each file; ask for it, then download."""
-    meta = download(DATAGOV.format(dataset), name=f"{name}.link.json", refresh=True, offline=args.offline)
-    url = json.loads(meta.read_text())["data"]["url"]
-    return download(url, name=name, refresh=args.refresh, offline=args.offline)
+    """data.gov.sg gives a short-lived link to each file; ask for it, then download.
+    Its open API allows only a few requests a minute, so: reuse this week's copy,
+    keep 15 seconds between requests, and wait and try again when told "too many"."""
+    import urllib.error
+    cached = CACHE / name
+    if cached.exists() and not args.refresh:
+        return cached
+    for attempt in range(4):
+        try:
+            meta = download(DATAGOV.format(dataset), name=f"{name}.link.json", refresh=True, offline=args.offline, min_gap=15)
+            url = json.loads(meta.read_text())["data"]["url"]
+            return download(url, name=name, refresh=True, offline=args.offline, min_gap=15)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 429 or attempt == 3:
+                raise
+            time.sleep(30 * (attempt + 1))
 
 
 # ---------- Singapore ----------
