@@ -9,6 +9,8 @@ def district_detail(page, name):
     text = page.inner_text("#detail")
     assert "15,51,019" in text, "Bharuch population missing"
     assert "14" in text, "Bharuch Kendra count missing"
+    assert "Gap score" in text and "rank" in text, "Phase 3: gap score missing"
+    assert page.inner_text("#ranking").count("\n") >= 3, "Phase 3: ranking list missing"
     page.screenshot(path=f"docs/images/{name}-bharuch.png")
 
 

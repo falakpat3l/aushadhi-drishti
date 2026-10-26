@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import geo  # noqa: E402
+import insights  # noqa: E402
 from config import CACHE, OUT, SIMPLIFY_DISTRICT, SIMPLIFY_PINCODE, STATES, URLS  # noqa: E402
 from fetch import Blocked, download, fetched_at  # noqa: E402
 from geocode import Geocoder  # noqa: E402
@@ -109,6 +110,8 @@ def build_state(state, cfg, files, args):
         p.update(jak=0, osm_pharmacy=0, osm_hospital=0, gov_facilities=0)
         rp = p["geom"].representative_point()
         p["center"] = (round(rp.x, 5), round(rp.y, 5))
+        home = loc.find(*p["center"])
+        p["district_lgd"] = home["lgd"] if home else None
 
     def place(lon, lat):
         d = loc.find(lon, lat)
@@ -189,6 +192,12 @@ def build_state(state, cfg, files, args):
     else:
         note(f"jak_stores_{slug}", False, "no store list yet: Kendras shown as district totals only")
 
+    # Insights (Phase 3): per-person numbers, gap score, pincodes to look at first.
+    weights = insights.add_insights(districts)
+    for d in districts:
+        d["pincode_hints"] = insights.pincode_hints(d["lgd"], pincodes)
+    note(f"gap_score_{slug}", True, "weights used: " + ", ".join(f"{k} {v}" for k, v in weights.items()))
+
     # Write the files the website loads.
     feats = []
     for d in districts:
@@ -209,7 +218,7 @@ def build_state(state, cfg, files, args):
         "gov": ["lon", "lat", "type", "name"],
     }, **points}
     (out_dir / "points.json").write_text(json.dumps(pts, separators=(",", ":")))
-    return districts
+    return districts, weights
 
 
 def main():
@@ -228,8 +237,8 @@ def main():
 
     states = []
     for state, cfg in STATES.items():
-        districts = build_state(state, cfg, files, args)
-        states.append({"name": state.title(), "slug": cfg["slug"], "districts": len(districts)})
+        districts, weights = build_state(state, cfg, files, args)
+        states.append({"name": state.title(), "slug": cfg["slug"], "districts": len(districts), "gap_weights": weights})
 
     OUT.mkdir(parents=True, exist_ok=True)
     meta = {"built": time.strftime("%Y-%m-%d"), "states": states, "sources": status}

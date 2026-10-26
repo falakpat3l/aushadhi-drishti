@@ -7,6 +7,7 @@ import { pincodeLayer } from './pincodes.js';
 import { esc } from '../ui.js';
 import { addCredit } from '../credits.js';
 import { districtDetail, pincodeDetail } from '../details.js';
+import { rankingHtml } from '../insights.js';
 
 export async function registerLayers(viewer, ui) {
   const meta = await loadJSON('meta.json');
@@ -47,7 +48,15 @@ export async function registerLayers(viewer, ui) {
       <label><input type="checkbox" data-layer="${k}" ${layers[k].count ? '' : 'disabled'}>
         <span><span class="dot" style="background:${s.color}"></span>${esc(s.label)}
         <small>${layers[k].count ? `${layers[k].count.toLocaleString('en-IN')} on the map` : 'Not available in this build'}</small></span></label>`).join('')}
+    <div id="ranking"></div>
     <p class="note" id="data-date"></p>`;
+
+  const ranking = ui.layerList.querySelector('#ranking');
+  ranking.innerHTML = rankingHtml(districts.features, state.gap_weights);
+  ranking.addEventListener('click', (ev) => {
+    const name = ev.target.closest('button[data-district]')?.dataset.district;
+    if (name) showDistrict(name);
+  });
 
   const metricSel = ui.layerList.querySelector('#metric');
   metricSel.value = districts.metric;
@@ -78,7 +87,7 @@ export async function registerLayers(viewer, ui) {
     const picked = viewer.scene.pick(click.position);
     if (!defined(picked)) return;
     const ad = picked.id?.ad || picked.id;
-    if (ad?.kind === 'district') ui.showDetail(ad.props.name, districtDetail(ad.props));
+    if (ad?.kind === 'district') ui.showDetail(ad.props.name, districtDetail(ad.props, districts.features.length));
     else if (ad?.kind === 'pincode') ui.showDetail(`Pincode ${ad.props.pincode}`, pincodeDetail(ad.props));
     else if (ad?.kind === 'point') {
       const info = ad.info();
@@ -94,7 +103,7 @@ export async function registerLayers(viewer, ui) {
     const pos = ents.flatMap((e) => e.polygon.hierarchy.getValue().positions);
     const sphere = BoundingSphere.fromPoints(pos);
     viewer.camera.flyToBoundingSphere(sphere, { duration: 1, offset: new HeadingPitchRange(0, CMath.toRadians(-90), sphere.radius * 3.2) });
-    ui.showDetail(ents[0].ad.props.name, districtDetail(ents[0].ad.props));
+    ui.showDetail(ents[0].ad.props.name, districtDetail(ents[0].ad.props, districts.features.length));
     return true;
   }
 

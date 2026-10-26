@@ -1,10 +1,11 @@
 // The details shown when a district or pincode is clicked.
 import { esc } from './ui.js';
+import { insightRows, pincodeHintsHtml } from './insights.js';
 
 const n = (v) => (v == null ? 'n/a' : Number(v).toLocaleString('en-IN'));
 export const day = (iso) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'n/a');
 
-export function districtDetail(p) {
+export function districtDetail(p, total = 0) {
   const rows = [
     ['Population (Census 2011)', n(p.pop2011)],
     [`Jan Aushadhi Kendras (as on ${day(p.jak_as_on)})`, n(p.jak_official)],
@@ -16,9 +17,9 @@ export function districtDetail(p) {
     ['Primary health centres', n(p.phc)],
     ['Sub-centres', n(p.subcentre)],
   ];
-  const extra = (p.extraRows || []).map(([k, v]) => [k, v]);
+  const extra = insightRows(p, total);
   const notes = (p.notes || []).map((t) => `<p class="note">${esc(t)}</p>`).join('');
-  return `<table class="kv">${[...extra, ...rows].map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>${notes}
+  return `<table class="kv">${[...extra, ...rows].map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>${notes}${pincodeHintsHtml(p)}
     <p class="note">OpenStreetMap is mapped by volunteers and misses many shops, so its counts are a floor, not a full count.</p>`;
 }
 

@@ -41,7 +41,7 @@ export async function addDistricts(viewer, ui, { slug, onSelect }) {
     }
   }
 
-  let current = 'jak_official';
+  let current = 'gap_score';
   function paint(metricId) {
     current = metricId;
     const m = metricById(metricId);

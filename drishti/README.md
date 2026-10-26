@@ -27,8 +27,8 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 0 | Research report: [docs/PHASE0_RESEARCH.md](docs/PHASE0_RESEARCH.md) | Done |
 | 1 | Fork, keep credit, centre on India, static site for GitHub Pages | Done |
 | 2 | Base layers for Gujarat: districts, population, Jan Aushadhi Kendras, health centres, OSM pharmacies and hospitals, pincode totals | Done |
-| 3 | Insights and gap score | Next |
-| 4 | Drug quality alerts and price caps | |
+| 3 | Insights: people per Kendra, outlets per 10,000 people, and a gap score for where a new generic store helps most ([how it works](docs/gap-score.md)) | Done |
+| 4 | Drug quality alerts and price caps | Next |
 | 5 | Ask the map | |
 | 6 | Weekly refresh | |
 
@@ -50,6 +50,7 @@ drishti/
     fetch.py            polite downloads (robots.txt, one name, cache)
     geo.py              boundaries, which-district-is-this-point
     geocode.py          address to position (pincode first, then Nominatim)
+    insights.py         per-person numbers and the gap score
     sources/            one file per data source
     seeds/              small hand-checked tables (with their sources)
   scripts/              small helper scripts for the build

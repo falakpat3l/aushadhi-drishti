@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 (Phase 3)
+- Per district: people per Kendra, Kendras per 1 lakh people, medicine outlets per 10,000 people, government health centres per Kendra.
+- Gap score (0 to 100) showing where a new Jan Aushadhi or generic store would help most, explained in `docs/gap-score.md`. Map opens coloured by it, with a top-5 list.
+- Each district lists up to five pincodes with health centres but no Kendra or mapped pharmacy.
+
 ## 0.2.0 (Phase 2)
 - Data build (`pipeline/`): Gujarat districts (LGD), 2011 population rebuilt for today's districts, Jan Aushadhi Kendra counts (31 Dec 2025), government health centres (NIC), OpenStreetMap pharmacies and hospitals, pincode totals.
 - Map layers: district colours with a choice of measure, pincode totals, dots for health centres, OSM pharmacies and hospitals, and Kendras when a store list is available.

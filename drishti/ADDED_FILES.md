@@ -24,3 +24,8 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/tests/test_pipeline.py`, `tests/phase_checks.py`, `tests/fixtures/overpass_sample.json`
 - Changed `drishti/README.md`, `GUIDE.md`, `DATA_SOURCES.md`, `CHANGELOG.md`, `.gitignore`, `tests/browser_check.py`
 - Added screenshots in `drishti/docs/images/`
+
+## Phase 3
+- Added `drishti/pipeline/insights.py`, `drishti/src/insights.js`, `drishti/docs/gap-score.md`
+- Changed `drishti/pipeline/build.py`, `src/details.js`, `src/layers/index.js`, `src/layers/districts.js`
+- Changed `drishti/tests/test_pipeline.py`, `tests/phase_checks.py`, `README.md`, `CHANGELOG.md`, screenshots
