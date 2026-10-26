@@ -3,13 +3,14 @@
 
 def district_detail(page, name):
     """Phase 2: the test district opens with the right official numbers."""
+    assert "in India" in page.inner_text("#ranking"), "All-India ranking missing"
     ok = page.evaluate("(n) => window.__ad.layers.showDistrict(n)", "Bharuch")
     assert ok, "Bharuch not found on the map"
     page.wait_for_timeout(1500)
     text = page.inner_text("#detail")
     assert "15,51,019" in text, "Bharuch population missing"
     assert "Gujarat" in page.inner_text("#detail-section"), "state name missing from district details"
-    assert "in India" in page.inner_text("#ranking"), "All-India ranking missing"
+    assert "in Gujarat" in page.inner_text("#ranking"), "state ranking missing after opening a district"
     assert "14" in text, "Bharuch Kendra count missing"
     assert "Gap score" in text and "rank" in text, "Phase 3: gap score missing"
     assert page.inner_text("#ranking").count("\n") >= 3, "Phase 3: ranking list missing"

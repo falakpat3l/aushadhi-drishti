@@ -55,3 +55,9 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 
 ## Phase 7 fixes
 - Changed `drishti/pipeline/sources/cdsco.py`, `pipeline/insights.py`, `tests/test_pipeline.py`, `docs/gap-score.md`, `CHANGELOG.md`, `ADDED_FILES.md`
+
+## Phase 8
+- Added `drishti/src/theme.js`, `drishti/public/fonts/` (Noto Sans map glyphs)
+- Rewrote `drishti/index.html`, `src/style.css`, `src/main.js`, `src/map.js`, `src/layers/index.js`, `layers/basemap.js`, `layers/districts.js`, `layers/pincodes.js`, `layers/points.js`; changed `src/medicine.js`, `src/ui.js`, `pipeline/build.py` (district label points)
+- Changed `drishti/package.json`, `package-lock.json`: added maplibre-gl, removed cesium and the copy step. `drishti/scripts/copy-cesium.mjs` and `drishti/src/cesiumBase.js` are kept but no longer used.
+- Changed `drishti/tests/phase_checks.py`, docs and screenshots

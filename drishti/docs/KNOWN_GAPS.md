@@ -21,7 +21,7 @@ Honest list of what the map does not do yet, and why. Updated each phase.
 
 ## Map
 
-1. On phones the map opens flat (2D) to stay fast; laptops get the 3D globe.
+1. The map is flat (no globe), with north always up.
 2. There is no street map underneath, by design: free street-map tiles draw India's borders the international way. The background shows India's official outline, state lines, neighbours and main city names only.
 3. Dots (pharmacies, hospitals, health centres) and pincode areas load one state at a time, to keep phones fast. Pick a state to see them.
 

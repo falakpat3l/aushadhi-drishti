@@ -1,44 +1,47 @@
-// Dots for public outlets and health centres. Drawn as one light batch each.
-import { PointPrimitiveCollection, Cartesian3, Color, NearFarScalar } from 'cesium';
+// Dots for public outlets and health centres, for the picked state.
+import { onThemeChange, currentTheme } from '../theme.js';
 
 export const POINT_STYLES = {
-  jak: { color: '#3ed6b0', size: 8, label: 'Jan Aushadhi Kendra' },
-  pharmacy: { color: '#f2b84b', size: 5, label: 'Pharmacy (OpenStreetMap)' },
-  hospital: { color: '#ef6a5b', size: 6, label: 'Hospital (OpenStreetMap)' },
-  gov: { color: '#8fb8ff', size: 5, label: 'Government health centre' },
+  jak: { color: '#139a74', size: 4.5, label: 'Jan Aushadhi Kendra' },
+  pharmacy: { color: '#d4860b', size: 3.5, label: 'Pharmacy (OpenStreetMap)' },
+  hospital: { color: '#c23b2f', size: 3.5, label: 'Hospital (OpenStreetMap)' },
+  gov: { color: '#2d68d8', size: 3.5, label: 'Government health centre' },
 };
 
-export function addPoints(viewer, kind, rows, makeInfo) {
+export function addPoints(map, kind, rows, makeInfo) {
   const style = POINT_STYLES[kind];
-  const col = viewer.scene.primitives.add(new PointPrimitiveCollection());
-  const color = Color.fromCssColorString(style.color);
-  let count = 0;
-  const fill = (list) => {
-    col.removeAll();
-    count = list.length;
-    for (const r of list) {
-      col.add({
-        position: Cartesian3.fromDegrees(r[0], r[1], 1500),
-        pixelSize: style.size,
-        color,
-        outlineColor: Color.fromCssColorString('#0b1117'),
-        outlineWidth: 1,
-        scaleByDistance: new NearFarScalar(2e4, 1.6, 4e6, 0.7),
-        id: { kind: 'point', layer: kind, info: () => makeInfo(r) },
-      });
-    }
-    viewer.scene.requestRender();
-  };
-  fill(rows);
-  col.show = false;
-  return {
+  const id = `dots-${kind}`;
+  let list = [];
+  const toFc = (r) => ({ type: 'FeatureCollection', features: r.map((row, i) => ({ type: 'Feature', properties: { i }, geometry: { type: 'Point', coordinates: [row[0], row[1]] } })) });
+  map.addSource(id, { type: 'geojson', data: toFc([]) });
+  const stroke = () => (currentTheme() === 'dark' ? '#0e1316' : '#ffffff');
+  map.addLayer({
+    id, type: 'circle', source: id, layout: { visibility: 'none' },
+    paint: {
+      'circle-color': style.color,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, style.size * 0.7, 9, style.size * 1.4, 13, style.size * 2.2],
+      'circle-stroke-color': stroke(),
+      'circle-stroke-width': 0.8,
+    },
+  });
+  onThemeChange(() => map.setPaintProperty(id, 'circle-stroke-color', stroke()));
+  map.on('mouseenter', id, () => (map.getCanvas().style.cursor = 'pointer'));
+  map.on('mouseleave', id, () => (map.getCanvas().style.cursor = ''));
+
+  const api = {
+    layerId: id,
     get count() {
-      return count;
+      return list.length;
     },
-    setRows: fill,
+    info: (i) => makeInfo(list[i]),
+    setRows(rows2) {
+      list = rows2 || [];
+      map.getSource(id).setData(toFc(list));
+    },
     setVisible(on) {
-      col.show = on;
-      viewer.scene.requestRender();
+      map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
     },
   };
+  api.setRows(rows);
+  return api;
 }

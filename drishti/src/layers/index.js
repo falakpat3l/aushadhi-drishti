@@ -1,8 +1,7 @@
-// Puts every layer on the map and builds the Layers panel.
-// The map opens on all of India. Picking a state flies there, ranks its
-// districts, and loads its dots and pincode areas (kept per state, so phones
-// never download all of India's dots at once).
-import { ScreenSpaceEventHandler, ScreenSpaceEventType, defined, BoundingSphere, HeadingPitchRange, Math as CMath, Rectangle } from 'cesium';
+// Puts every layer on the map and builds the panel.
+// The map opens on all of India. Tapping a state (or picking it from the
+// list) zooms to it, ranks its districts and loads its dots and pincodes.
+// Inside a state, tapping a district opens its details.
 import { loadJSON } from '../data.js';
 import { addDistricts, metricOptions } from './districts.js';
 import { addPoints, POINT_STYLES } from './points.js';
@@ -13,55 +12,40 @@ import { addCredit } from '../credits.js';
 import { districtDetail, pincodeDetail } from '../details.js';
 import { rankingHtml } from '../insights.js';
 import { setupMedicines } from '../medicine.js';
-import { resetView } from '../map.js';
+import { resetView, fitTo } from '../map.js';
 
 const EMPTY = { jak: [], pharmacy: [], hospital: [], gov: [] };
+const GOV_TYPES = { DHO: 'District hospital', THO: 'Taluka hospital', CHC: 'Community health centre', PHC: 'Primary health centre' };
 
-export async function registerLayers(viewer, ui) {
+export async function registerLayers(map, ui) {
   const meta = await loadJSON('meta.json');
-  await addBasemap(viewer);
-  const districts = await addDistricts(viewer, ui);
-  const pincodes = pincodeLayer(viewer);
+  await addBasemap(map);
+  const districts = await addDistricts(map, ui);
+  const pincodes = pincodeLayer(map);
   const stateBySlug = new Map(meta.states.map((s) => [s.slug, s]));
   let current = null; // the picked state, or null for all of India
 
+  const osmLink = (id) => `<a href="https://www.openstreetmap.org/${osmPath(id)}" target="_blank" rel="noopener">view on OpenStreetMap</a>`;
   const layers = {
-    jak: addPoints(viewer, 'jak', [], (r) => ({
-      title: 'Jan Aushadhi Kendra',
-      rows: [['Store code', r[2]], ['Pincode', r[3]], ['Position', r[4] === 'pincode' ? 'Approximate (centre of pincode area)' : 'From address']],
-    })),
-    pharmacy: addPoints(viewer, 'pharmacy', [], (r) => ({
-      title: r[3] ? 'Pharmacy named Jan Aushadhi (OpenStreetMap)' : 'Pharmacy (OpenStreetMap)',
-      rows: [['OpenStreetMap', `<a href="https://www.openstreetmap.org/${osmPath(r[2])}" target="_blank" rel="noopener">view source</a>`]],
-      html: true,
-    })),
-    hospital: addPoints(viewer, 'hospital', [], (r) => ({
-      title: r[3] || 'Hospital (OpenStreetMap)',
-      rows: [['Kind', 'Hospital'], ['OpenStreetMap', `<a href="https://www.openstreetmap.org/${osmPath(r[2])}" target="_blank" rel="noopener">view source</a>`]],
-      html: true,
-    })),
-    gov: addPoints(viewer, 'gov', [], (r) => ({
-      title: r[3] || 'Government health centre',
-      rows: [['Type', GOV_TYPES[r[2]] || r[2]], ['Source', 'NIC HealthGIS']],
-    })),
+    gov: addPoints(map, 'gov', [], (r) => ({ title: r[3] || 'Government health centre', rows: [['Type', GOV_TYPES[r[2]] || r[2]], ['Source', 'NIC HealthGIS']] })),
+    hospital: addPoints(map, 'hospital', [], (r) => ({ title: r[3] || 'Hospital', rows: [['Kind', 'Hospital (OpenStreetMap)'], ['Source', osmLink(r[2])]], html: true })),
+    pharmacy: addPoints(map, 'pharmacy', [], (r) => ({ title: r[3] ? 'Pharmacy named Jan Aushadhi' : 'Pharmacy', rows: [['Kind', 'Pharmacy (OpenStreetMap)'], ['Source', osmLink(r[2])]], html: true })),
+    jak: addPoints(map, 'jak', [], (r) => ({ title: 'Jan Aushadhi Kendra', rows: [['Store code', r[2]], ['Pincode', r[3]]] })),
   };
-  layers.alerts = await setupMedicines(viewer, ui);
+  layers.alerts = await setupMedicines(map, ui);
 
-  // Panel: state picker, metric chooser and layer switches.
   ui.layerList.innerHTML = `
-    <label for="state-pick">Show</label>
-    <select id="state-pick"><option value="">All India (${meta.india.districts} districts)</option>
-      ${meta.states.map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select>
-    <label for="metric">Colour districts by</label>
-    <select id="metric">${metricOptions()}</select>
-    <label><input type="checkbox" data-layer="districts" checked><span>District colours<small id="district-note"></small></span></label>
-    <label><input type="checkbox" data-layer="pincodes"><span>Pincode totals<small id="pincode-note"></small></span></label>
-    ${Object.entries(POINT_STYLES).map(([k, s]) => `
-      <label><input type="checkbox" data-layer="${k}">
-        <span><span class="dot" style="background:${s.color}"></span>${esc(s.label)}<small data-count="${k}"></small></span></label>`).join('')}
-    <label><input type="checkbox" data-layer="alerts" ${layers.alerts.count ? '' : 'disabled'}>
-      <span><span class="dot" style="background:#f2b84b"></span>Drug quality alerts (CDSCO)
-      <small>${layers.alerts.count ? `${layers.alerts.count.toLocaleString('en-IN')} samples; spurious ones in purple, at the reporting state` : 'Not available in this build'}</small></span></label>
+    <div class="field"><label for="state-pick">Area</label>
+      <select id="state-pick"><option value="">All India</option>
+        ${meta.states.map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
+    <div class="field"><label for="metric">Colour by</label><select id="metric">${metricOptions()}</select></div>
+    <div class="switches">
+      <label><input type="checkbox" data-layer="districts" checked><span>Districts <small id="district-note"></small></span></label>
+      <label><input type="checkbox" data-layer="pincodes"><span>Pincodes <small id="pincode-note"></small></span></label>
+      ${Object.entries(POINT_STYLES).map(([k, s]) => `
+        <label><input type="checkbox" data-layer="${k}"><span><i class="dot" style="background:${s.color}"></i>${esc(s.label)} <small data-count="${k}"></small></span></label>`).join('')}
+      <label><input type="checkbox" data-layer="alerts" ${layers.alerts.count ? '' : 'disabled'}><span><i class="dot" style="background:#e0a21b"></i>Drug quality alerts <small>${layers.alerts.count ? `${layers.alerts.count.toLocaleString('en-IN')} samples` : 'none in this build'}</small></span></label>
+    </div>
     <div id="ranking"></div>
     <p class="note" id="data-date"></p>`;
 
@@ -70,16 +54,21 @@ export async function registerLayers(viewer, ui) {
   const metricSel = $('#metric');
   const statePick = $('#state-pick');
 
+  function crumbs(district) {
+    const parts = [`<button type="button" data-go="india">India</button>`];
+    if (current) parts.push(`<button type="button" data-go="state">${esc(current.name)}</button>`);
+    if (district) parts.push(`<span>${esc(district)}</span>`);
+    ui.crumbs.innerHTML = parts.join('<i>/</i>');
+  }
+
   function drawRanking() {
     const feats = current ? districts.features.filter((f) => f.properties.slug === current.slug) : districts.features;
     ranking.innerHTML = rankingHtml(feats, meta.india.gap_weights, current ? current.name : null);
   }
 
   function updateSwitches() {
-    $('#district-note').textContent = current
-      ? `${current.name}: ${current.districts} districts`
-      : `All India: ${meta.india.districts} districts, ${meta.india.jak.toLocaleString('en-IN')} Kendras`;
-    $('#pincode-note').textContent = current ? `${current.pincodes.toLocaleString('en-IN')} pincode areas` : 'Pick a state to see pincodes';
+    $('#district-note').textContent = current ? `${current.districts} in ${current.name}` : `${meta.india.districts} in India`;
+    $('#pincode-note').textContent = current ? `${current.pincodes.toLocaleString('en-IN')}` : 'pick a state';
     $('input[data-layer=pincodes]').disabled = !current;
     for (const k of Object.keys(POINT_STYLES)) {
       const box = $(`input[data-layer=${k}]`);
@@ -89,39 +78,103 @@ export async function registerLayers(viewer, ui) {
         box.checked = false;
         layers[k].setVisible(false);
       }
-      const why = k === 'jak' ? 'Waiting for the store list (see known gaps)' : k === 'gov' && current && !current.centre_data ? 'No NIC data for this state' : 'Not available in this build';
-      ui.layerList.querySelector(`[data-count=${k}]`).textContent = !current ? 'Pick a state to see these dots' : n ? `${n.toLocaleString('en-IN')} in ${current.name}` : why;
+      const why = k === 'jak' ? 'waiting for store list' : k === 'gov' && current && !current.centre_data ? 'no NIC data here' : 'none in this build';
+      $(`[data-count=${k}]`).textContent = !current ? 'pick a state' : n ? n.toLocaleString('en-IN') : why;
     }
   }
 
   async function pickState(slug, { fly = true } = {}) {
-    current = slug ? stateBySlug.get(slug) : null;
-    statePick.value = slug || '';
+    current = slug ? stateBySlug.get(slug) || null : null;
+    statePick.value = current ? current.slug : '';
+    districts.select(null);
     districts.setFocus(current ? current.slug : null);
     if (current && metricSel.value === 'gap_score') metricSel.value = 'gap_score_state';
     if (!current && metricSel.value === 'gap_score_state') metricSel.value = 'gap_score';
     districts.paint(metricSel.value);
     drawRanking();
     updateSwitches();
-    await pincodes.setState(current ? current.slug : null);
-    const pts = current ? await loadJSON(`states/${current.slug}/points.json`) : EMPTY;
-    for (const k of Object.keys(POINT_STYLES)) layers[k].setRows(pts[k] || []);
+    crumbs(null);
     if (fly) {
       if (current) {
         const [w, s, e, n] = current.bbox;
-        viewer.camera.flyTo({ destination: Rectangle.fromDegrees(w, s, e, n), duration: 1.2 });
-      } else resetView(viewer);
+        fitTo(map, [[w, s], [e, n]]);
+      } else resetView(map);
     }
+    await pincodes.setState(current ? current.slug : null);
+    const pts = current ? await loadJSON(`states/${current.slug}/points.json`) : EMPTY;
+    for (const k of Object.keys(POINT_STYLES)) layers[k].setRows(pts[k] || []);
   }
+
+  function openDistrict(p, fly) {
+    const st = stateBySlug.get(p.slug);
+    districts.select(p.lgd);
+    crumbs(p.name);
+    if (fly) {
+      const f = districts.features.find((x) => x.properties.lgd === p.lgd);
+      if (f) fitTo(map, bboxOf(f.geometry));
+    }
+    ui.showDetail(`${p.name}, ${p.state}`, districtDetail(p, meta.india.districts, st ? st.districts : 0));
+  }
+
+  // Fly to a district (by LGD code, or by name) and open its details.
+  function showDistrict(key) {
+    const all = [...districts.byLgd.values()];
+    let p = typeof key === 'number' ? districts.byLgd.get(key) : null;
+    if (!p && typeof key === 'string') {
+      const want = key.toLowerCase();
+      p = all.find((d) => d.name.toLowerCase() === want && (!current || d.slug === current.slug)) || all.find((d) => d.name.toLowerCase() === want);
+    }
+    if (!p) return false;
+    if (!current || current.slug !== p.slug) pickState(p.slug, { fly: false });
+    openDistrict(p, true);
+    return true;
+  }
+
+  // Taps and clicks: dots first, then pincodes, then districts.
+  map.on('click', (e) => {
+    const dotLayers = Object.values(layers).filter((l) => l.layerId).map((l) => l.layerId).filter((id) => map.getLayoutProperty(id, 'visibility') === 'visible');
+    const box = [[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]];
+    const dot = dotLayers.length ? map.queryRenderedFeatures(box, { layers: dotLayers })[0] : null;
+    if (dot) {
+      const kind = dot.layer.id.replace('dots-', '');
+      const info = layers[kind].info(dot.properties.i);
+      ui.showDetail(info.title, table(info.rows, info.html));
+      return;
+    }
+    const alert = map.getLayer('alerts-dots') && map.getLayoutProperty('alerts-dots', 'visibility') === 'visible' ? map.queryRenderedFeatures(box, { layers: ['alerts-dots'] })[0] : null;
+    if (alert) {
+      const info = layers.alerts.info(alert.properties.pid);
+      ui.showDetail(info.title, info.raw);
+      return;
+    }
+    const d = map.queryRenderedFeatures(e.point, { layers: ['districts-fill'] })[0];
+    if (!d) return;
+    const p = districts.byLgd.get(d.id);
+    if (!p) return;
+    if (!current || current.slug !== p.slug) {
+      pickState(p.slug);
+      return;
+    }
+    const pin = map.getLayoutProperty('pincodes-fill', 'visibility') === 'visible' ? map.queryRenderedFeatures(e.point, { layers: ['pincodes-fill'] })[0] : null;
+    if (pin && pincodes.byPin.get(pin.id)) {
+      ui.showDetail(`Pincode ${pin.id}`, pincodeDetail(pincodes.byPin.get(pin.id)));
+      return;
+    }
+    openDistrict(p, false);
+  });
 
   ranking.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-lgd]');
     if (btn) showDistrict(Number(btn.dataset.lgd));
   });
+  ui.crumbs.addEventListener('click', (ev) => {
+    const go = ev.target.closest('button[data-go]')?.dataset.go;
+    if (go === 'india') pickState(null);
+    if (go === 'state' && current) pickState(current.slug);
+  });
   metricSel.value = districts.metric;
   metricSel.addEventListener('change', () => districts.paint(metricSel.value));
   statePick.addEventListener('change', () => pickState(statePick.value));
-
   ui.layerList.querySelectorAll('input[data-layer]').forEach((box) => {
     box.addEventListener('change', () => {
       const id = box.dataset.layer;
@@ -130,52 +183,15 @@ export async function registerLayers(viewer, ui) {
       else layers[id].setVisible(box.checked);
     });
   });
-  document.getElementById('data-date').textContent = `Data built ${meta.built}. See the About section for sources.`;
+  document.getElementById('data-date').textContent = `Data built ${meta.built}.`;
   await pickState(null, { fly: false });
 
-  // Credits for every data source on the map.
-  addCredit('lgd', 'District boundaries: LGD via <a href="https://github.com/yashveeeeeeer/india-geodata" target="_blank" rel="noopener">india-geodata</a> (CC0)');
-  addCredit('census', 'Population: Census of India 2011');
-  addCredit('jak', 'Jan Aushadhi counts: PMBJP / PIB');
-  addCredit('nic', 'Health centres: NIC HealthGIS (GODL-India)');
-  addCredit('pin', 'Pincode areas: data.gov.in via india-geodata');
-  if (meta.sources?.osm_india?.ok) addCredit('osm-data', 'Pharmacies and hospitals © OpenStreetMap contributors (ODbL), via Geofabrik');
-
-  // Click anything for details.
-  const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
-  handler.setInputAction((click) => {
-    const picked = viewer.scene.pick(click.position);
-    if (!defined(picked)) return;
-    const ad = picked.id?.ad || picked.id;
-    if (ad?.kind === 'district') openDistrict(ad.props);
-    else if (ad?.kind === 'pincode') ui.showDetail(`Pincode ${ad.props.pincode}`, pincodeDetail(ad.props));
-    else if (ad?.kind === 'point') {
-      const info = ad.info();
-      ui.showDetail(info.title, info.raw || table(info.rows, info.html));
-    }
-  }, ScreenSpaceEventType.LEFT_CLICK);
-
-  function openDistrict(p) {
-    const st = stateBySlug.get(p.slug);
-    ui.showDetail(`${p.name}, ${p.state}`, districtDetail(p, meta.india.districts, st ? st.districts : 0));
-  }
-
-  // Fly to a district (by LGD code, or by name) and open its details.
-  function showDistrict(key) {
-    const want = typeof key === 'number' ? null : String(key).toLowerCase();
-    const ents = districts.dataSource.entities.values.filter((e) =>
-      want == null ? e.ad.props.lgd === key : e.ad.props.name.toLowerCase() === want && (!current || e.ad.props.slug === current.slug),
-    );
-    const pool = ents.length ? ents : districts.dataSource.entities.values.filter((e) => want != null && e.ad.props.name.toLowerCase() === want);
-    if (!pool.length) return false;
-    const lgd = pool[0].ad.props.lgd;
-    const mine = pool.filter((e) => e.ad.props.lgd === lgd);
-    const pos = mine.flatMap((e) => e.polygon.hierarchy.getValue().positions);
-    const sphere = BoundingSphere.fromPoints(pos);
-    viewer.camera.flyToBoundingSphere(sphere, { duration: 1, offset: new HeadingPitchRange(0, CMath.toRadians(-90), sphere.radius * 3.2) });
-    openDistrict(mine[0].ad.props);
-    return true;
-  }
+  addCredit('lgd', 'Districts: LGD via <a href="https://github.com/yashveeeeeeer/india-geodata" target="_blank" rel="noopener">india-geodata</a>');
+  addCredit('census', 'Population: Census 2011');
+  addCredit('jak', 'Kendra counts: PMBJP / PIB');
+  addCredit('nic', 'Health centres: NIC HealthGIS');
+  addCredit('pin', 'Pincodes: data.gov.in');
+  if (meta.sources?.osm_india?.ok) addCredit('osm-data', '© OpenStreetMap contributors (ODbL), via Geofabrik');
 
   return {
     meta, districts, pincodes, layers, showDistrict, pickState,
@@ -185,7 +201,16 @@ export async function registerLayers(viewer, ui) {
   };
 }
 
-const GOV_TYPES = { DHO: 'District hospital', THO: 'Taluka hospital', CHC: 'Community health centre', PHC: 'Primary health centre' };
+function bboxOf(geom) {
+  let w = 180, s = 90, e = -180, n = -90;
+  const walk = (c) => {
+    if (typeof c[0] === 'number') {
+      w = Math.min(w, c[0]); e = Math.max(e, c[0]); s = Math.min(s, c[1]); n = Math.max(n, c[1]);
+    } else c.forEach(walk);
+  };
+  walk(geom.coordinates);
+  return [[w, s], [e, n]];
+}
 
 function osmPath(id) {
   const kind = { n: 'node', w: 'way', r: 'relation' }[id[0]];

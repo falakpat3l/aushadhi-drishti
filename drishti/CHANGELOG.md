@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 (Phase 8)
+- Flat map of India with MapLibre GL instead of the CesiumJS globe: sharp on Retina and phone screens, pinch, trackpad, scroll and double-tap zoom; north stays up.
+- Tap a state on the map to open it (same as picking it from the list); inside a state, tap a district for its details. A path at the top left (India / state / district) goes back.
+- New look in the style of falakpatel.com: serif text, link blue, thin rules, light and dark mode (remembered on the device), monospace labels and numbers from God's Eye View.
+- Map labels drawn sharp with Noto Sans; district names appear when you zoom in.
+
 ## 0.7.1
 - CDSCO alerts reader fixed: the live page writes its links with single quotes, which the reader missed.
 - OpenStreetMap pharmacies are shown but no longer scored: about 9,000 are mapped for all of India, too few to compare districts fairly.

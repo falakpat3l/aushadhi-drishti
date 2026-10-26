@@ -1,6 +1,5 @@
 // Phase 4: drug quality alerts on the map (with a month timeline) and a
 // medicine check that links a brand to its generic, its price cap and alerts.
-import { PointPrimitiveCollection, Cartesian3, Color, NearFarScalar } from 'cesium';
 import { loadJSON } from './data.js';
 import { esc } from './ui.js';
 import { addCredit } from './credits.js';
@@ -8,7 +7,7 @@ import { addCredit } from './credits.js';
 const FAIR = 'A not-of-standard-quality result is about one batch, not the whole company. Spurious samples were not made by the company named on the label, so they are shown at the state that reported them, never at a maker.';
 const monthName = (m) => new Date(`${m}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
-export async function setupMedicines(viewer, ui) {
+export async function setupMedicines(map, ui) {
   const [alerts, meds] = await Promise.all([loadJSON('alerts.json'), loadJSON('medicines.json')]);
   alerts.counts = alerts.counts || [];
   alerts.months = alerts.months || [];
@@ -21,31 +20,30 @@ export async function setupMedicines(viewer, ui) {
 
   // Map layer: one dot per district (or reporting state), sized by count.
   // Only counts are published; details stay on CDSCO's own lists.
-  const col = viewer.scene.primitives.add(new PointPrimitiveCollection());
-  col.show = false;
   let month = null;
   const total = (pid) => alerts.counts.filter((c) => c[2] === pid && (!month || c[0] === month)).reduce((t, c) => t + c[3], 0);
+  map.addSource('alerts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({
+    id: 'alerts-dots', type: 'circle', source: 'alerts', layout: { visibility: 'none' },
+    paint: {
+      'circle-color': ['case', ['get', 'spurious'], '#9b5de5', '#e0a21b'],
+      'circle-opacity': 0.85,
+      'circle-radius': ['interpolate', ['linear'], ['get', 'n'], 1, 4, 10, 8, 100, 18],
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#ffffff',
+    },
+  });
   function draw() {
-    col.removeAll();
     const counts = new Map();
     for (const c of alerts.counts) {
       if (c[2] < 0 || (month && c[0] !== month)) continue;
       counts.set(c[2], (counts.get(c[2]) || 0) + c[3]);
     }
-    for (const [pid, n] of counts) {
+    const features = [...counts].map(([pid, n]) => {
       const p = alerts.places[pid];
-      const spurious = p[2] === 'state' && p[3].startsWith('Reported in');
-      col.add({
-        position: Cartesian3.fromDegrees(p[0], p[1]),
-        pixelSize: Math.min(6 + Math.sqrt(n) * 3, 28),
-        color: Color.fromCssColorString(spurious ? '#c77dff' : '#f2b84b').withAlpha(0.85),
-        outlineColor: Color.fromCssColorString('#0b1117'),
-        outlineWidth: 1,
-        scaleByDistance: new NearFarScalar(2e4, 1.4, 6e6, 0.8),
-        id: { kind: 'point', layer: 'alerts', info: () => placeInfo(pid) },
-      });
-    }
-    viewer.scene.requestRender();
+      return { type: 'Feature', properties: { pid, n, spurious: p[2] === 'state' && p[3].startsWith('Reported in') }, geometry: { type: 'Point', coordinates: [p[0], p[1]] } };
+    });
+    map.getSource('alerts').setData({ type: 'FeatureCollection', features });
   }
 
   function sourceLinks(srcIds) {
@@ -126,9 +124,9 @@ export async function setupMedicines(viewer, ui) {
 
   return {
     count: alerts.counts.reduce((t, c) => t + c[3], 0),
+    info: (pid) => placeInfo(pid),
     setVisible(on) {
-      col.show = on;
-      viewer.scene.requestRender();
+      map.setLayoutProperty('alerts-dots', 'visibility', on ? 'visible' : 'none');
     },
     check: (q) => checkMedicine(q, meds, alerts),
   };

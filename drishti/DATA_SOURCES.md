@@ -20,7 +20,8 @@ Every source used by aushadhi-drishti is listed here.
 | Brand to generic mapping | https://github.com/falakpat3l/anukalpa (`docs/data/IN.json`) | India list: C-DAC / NRCeS Drug Information Service Bundle, CC BY 4.0, plus brands.csv by Falak Patel | About 93,000 Indian brands | When anukalpa is rebuilt | Downloaded weekly from GitHub; copied to the site for the medicine search | Phase 4 |
 | India's outline (background map) | Survey of India boundary, via https://github.com/datameet/maps and india-geodata (`data/survey-of-india/india-boundary`) | CC BY 4.0 | India as the Government of India shows it | 2024 | `pipeline/basemap.py`, output committed in `public/basemap/` | Phase 7 |
 | Neighbouring countries, city names | Natural Earth, India point of view (`ne_10m_admin_0_countries_ind`, `ne_50m_populated_places_simple`), via https://github.com/nvkelso/natural-earth-vector | Public domain | Region around India; India's Survey of India outline is cut out of every neighbour | v5.1 | `pipeline/basemap.py` | Phase 7 |
-| Map engine: CesiumJS | https://cesium.com/platform/cesiumjs/ | Apache 2.0. No Cesium ion account or token used | n/a | n/a | npm package | Phase 1 |
+| Map engine: MapLibre GL JS 4.7 | https://maplibre.org | BSD-3-Clause. No API key | n/a | n/a | npm package | Phase 8 (CesiumJS before) |
+| Map label font: Noto Sans (Regular, Medium, Italic glyphs) | https://github.com/protomaps/basemaps-assets | SIL Open Font License | Latin letters | n/a | Copied into `public/fonts/` | Phase 8 |
 | Fonts: Inter, JetBrains Mono | https://fonts.google.com | SIL Open Font License | n/a | n/a | Loaded by the visitor's browser | Phase 1 |
 | Map code base | https://github.com/bilawalsidhu/gods-eye-view | MIT (code only). Its bundled data is not used by this app | n/a | n/a | GitHub fork; original files kept unchanged outside `drishti/` | Phase 1 |
 

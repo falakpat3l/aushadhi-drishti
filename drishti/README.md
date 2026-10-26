@@ -10,7 +10,7 @@ An open, map-based "god's-eye view" of India's pharmacy supply side, built only 
 
 ## Credit
 
-This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view) by **Bilawal Sidhu** (MIT licence). It uses the same map engine (CesiumJS) and the same idea: one map that brings public signals together. The original code is kept, unchanged, in the rest of this repository. This app lives only in the `drishti/` folder. See `LICENSE` for both copyright lines.
+This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view) by **Bilawal Sidhu** (MIT licence). It keeps the same idea, one map that brings public signals together, and some of its look (monospace labels, a heads-up style). Since version 0.8 the map is a flat map of India drawn with MapLibre GL instead of a CesiumJS globe: lighter, sharp on phones, and pinch and trackpad friendly. The original code is kept, unchanged, in the rest of this repository. This app lives only in the `drishti/` folder. See `LICENSE` for both copyright lines.
 
 ## Rules this project follows
 
@@ -39,7 +39,8 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 ```
 drishti/
   index.html            the page
-  src/                  map code (CesiumJS, plain JavaScript)
+  src/                  map code (MapLibre GL, plain JavaScript)
+    theme.js            light and dark mode
     main.js             starts everything
     map.js              the map: no API keys, no street-map tiles
     ui.js               side panel and phone bottom sheet

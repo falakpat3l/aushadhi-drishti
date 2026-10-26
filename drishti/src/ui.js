@@ -6,7 +6,9 @@ export function setupPanel() {
 
   const setOpen = (open) => {
     panel.classList.toggle('open', open);
+    document.body.classList.toggle('panel-open', open);
     toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? 'Close' : 'Panel';
   };
   setOpen(!narrow);
   toggle.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
@@ -15,20 +17,21 @@ export function setupPanel() {
     open: () => setOpen(true),
     layerList: document.getElementById('layer-list'),
     legend: document.getElementById('legend'),
+    crumbs: document.getElementById('crumbs'),
     showDetail(title, html) {
       document.getElementById('detail-title').textContent = title;
       document.getElementById('detail').innerHTML = html;
       const sec = document.getElementById('detail-section');
       sec.hidden = false;
       setOpen(true);
-      panel.scrollTo({ top: sec.offsetTop - 8, behavior: 'smooth' });
+      panel.scrollTo({ top: sec.offsetTop - 12, behavior: 'smooth' });
     },
     showAnswer(html) {
       document.getElementById('answer').innerHTML = html;
       const sec = document.getElementById('answer-section');
       sec.hidden = false;
       setOpen(true);
-      panel.scrollTo({ top: sec.offsetTop - 8, behavior: 'smooth' });
+      panel.scrollTo({ top: sec.offsetTop - 12, behavior: 'smooth' });
     },
   };
 }

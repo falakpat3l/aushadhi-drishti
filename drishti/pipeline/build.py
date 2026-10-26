@@ -277,6 +277,8 @@ def main():
     for d in districts:
         props = {k: v for k, v in d.items() if k not in ("geom", "merged_lgd", "jak_listed")}
         props["slug"] = geo.slug(d["state"])
+        lp = d["geom"].representative_point()
+        props["label"] = [round(lp.x, 3), round(lp.y, 3)]  # where the map writes the name
         feats.append(geo.feature(d["geom"], props, SIMPLIFY_DISTRICT))
     (OUT / "districts.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
 
