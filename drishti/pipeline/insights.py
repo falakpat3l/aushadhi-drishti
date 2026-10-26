@@ -25,6 +25,10 @@ combined with the weights above. If a signal has no data at all in a build
 weights are scaled up, and the map says so.
 """
 
+# Signal 2 counts only when OpenStreetMap has at least this many pharmacies
+# per 10,000 people overall (real chemist shops are far more common than that).
+OSM_MIN_SHARE = 2.0
+
 WEIGHTS = {"people_per_kendra": 0.50, "outlets_per_10k": 0.25, "centres_per_kendra": 0.25}
 WORSE_WHEN = {"people_per_kendra": "high", "outlets_per_10k": "low", "centres_per_kendra": "high"}
 
@@ -84,8 +88,10 @@ def add_insights(districts, by_state=True):
 
 def _score(districts, suffix):
     ranks = {k: percentile_ranks([d[k] for d in districts], WORSE_WHEN[k]) for k in WEIGHTS}
-    if not any(d["osm_pharmacy"] for d in districts):
-        # Without OpenStreetMap pharmacies, 'outlets' would just repeat signal 1.
+    if sum(d["osm_pharmacy"] for d in districts) < OSM_MIN_SHARE * sum(d["pop2011"] or 0 for d in districts) / 1e4:
+        # Too few pharmacies are mapped in OpenStreetMap for 'outlets' to mean
+        # anything: it would mostly repeat signal 1, or show where volunteers
+        # have mapped. It is still shown on the map, just not scored.
         ranks["outlets_per_10k"] = [None for _ in districts]
     used = {k: w for k, w in WEIGHTS.items() if any(r is not None for r in ranks[k])}
     total = sum(used.values()) or 1

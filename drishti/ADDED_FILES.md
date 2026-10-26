@@ -52,3 +52,6 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Changed `drishti/tests/test_pipeline.py`, `tests/ask.test.mjs`, `tests/phase_checks.py`, screenshots
 - Changed `drishti/README.md`, `DATA_SOURCES.md`, `GUIDE.md`, `CHANGELOG.md`, `docs/KNOWN_GAPS.md`, `docs/gap-score.md`, `.gitignore`, `package.json`
 - Changed `.github/workflows/drishti-pages.yml` (installs osmium-tool)
+
+## Phase 7 fixes
+- Changed `drishti/pipeline/sources/cdsco.py`, `pipeline/insights.py`, `tests/test_pipeline.py`, `docs/gap-score.md`, `CHANGELOG.md`, `ADDED_FILES.md`

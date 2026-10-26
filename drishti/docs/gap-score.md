@@ -27,7 +27,7 @@ Example: a district that is the worst on every signal scores 100. One that is in
 
 ## When a signal is missing
 
-If a build has no OpenStreetMap pharmacies at all (for example the weekly download failed), the outlets signal would only repeat the first signal, so it is left out. The other two weights are scaled up to add to 100% (two thirds and one third). The map shows which weights were used, under the ranking list.
+The outlets signal is used only when OpenStreetMap has at least 2 pharmacies per 10,000 people overall. Today it has far fewer (about 9,000 pharmacies for all of India, a small fraction of the real number), so the signal would mostly show where volunteers have mapped, not where shops are. It is left out of the score but still shown on the map. The other two weights are scaled up to add to 100% (two thirds and one third). The map shows which weights were used, under the ranking list.
 
 In states where the NIC file has no health centres (see known gaps), the centres signal is missing for those districts, so their score uses the other signals only. Districts with no Census population (the Pakistan-occupied areas) get no score.
 

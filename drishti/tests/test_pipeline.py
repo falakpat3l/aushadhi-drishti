@@ -116,6 +116,8 @@ class CdscoTest(unittest.TestCase):
         <td><a href="/opencms/opencms/system/modules/CDSCO.WEB/elements/download_file_division.jsp?num_id=MTM0ODc=">pdf</a></td></tr></table>"""
         links = cdsco.list_alert_links(html)
         self.assertEqual(len(links), 1)
+        # The live page writes links with single quotes.
+        self.assertEqual(len(cdsco.list_alert_links(html.replace('href="', "href='").replace('=">', "='>"))), 1)
         self.assertEqual(links[0]["month"], "2025-06")
         self.assertTrue(links[0]["url"].startswith("https://cdsco.gov.in/"))
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+- CDSCO alerts reader fixed: the live page writes its links with single quotes, which the reader missed.
+- OpenStreetMap pharmacies are shown but no longer scored: about 9,000 are mapped for all of India, too few to compare districts fairly.
+
 ## 0.7.0 (Phase 7)
 - All of India: 776 districts, all 767 rows of the official Kendra table (17,990 Kendras), 2011 population for every district (new districts rebuilt from sub-districts), health centres, pincodes.
 - The map of India as the Survey of India draws it, including all of Jammu and Kashmir, Ladakh and Arunachal Pradesh. Street-map tiles removed.

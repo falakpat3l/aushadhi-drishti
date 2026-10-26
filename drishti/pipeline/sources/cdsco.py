@@ -54,7 +54,8 @@ def list_alert_links(html, base="https://cdsco.gov.in"):
     out = []
     for row in re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I):
         cells = [unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S | re.I)]
-        link = re.search(r'href="([^"]*download_file_division\.jsp\?num_id=[^"]+)"', row)
+        # The live page uses single quotes around links (href='...'); accept both.
+        link = re.search(r"""href=["']([^"']*download_file_division\.jsp\?num_id=[^"']+)["']""", row)
         if len(cells) < 2 or not link:
             continue
         title = re.sub(r"\s+", " ", cells[1])
