@@ -118,6 +118,14 @@ def sg_population(path):
     return out
 
 
+def num(text):
+    """Census tables write zero as '-'; treat anything that is not a number as 0."""
+    try:
+        return int(float(str(text).replace(",", "").strip()))
+    except ValueError:
+        return 0
+
+
 def sg_census(path):
     """Census 2020 table: one row per planning area ("Bedok - Total") with
     columns Total_Total and Total_65_69 ... Total_90andOver."""
@@ -127,8 +135,8 @@ def sg_census(path):
             name = r["Number"]
             if not name.endswith(" - Total"):
                 continue
-            old = sum(int(float(r[c] or 0)) for c in r if c.startswith("Total_") and re.match(r"Total_(\d+)", c) and int(re.match(r"Total_(\d+)", c).group(1)) >= 65)
-            out[name[:-8].strip().upper()] = {"people": int(float(r["Total_Total"] or 0)), "aged_65_plus": old}
+            old = sum(num(r[c]) for c in r if c.startswith("Total_") and re.match(r"Total_(\d+)", c) and int(re.match(r"Total_(\d+)", c).group(1)) >= 65)
+            out[name[:-8].strip().upper()] = {"people": num(r["Total_Total"]), "aged_65_plus": old}
     return out
 
 

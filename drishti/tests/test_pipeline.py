@@ -213,7 +213,7 @@ class WorldTest(unittest.TestCase):
         import world
         with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False) as t:
             t.write("Number,Total_Total,Total_60_64,Total_65_69,Total_90andOver\nTotal,9,1,1,1\nBedok - Total,100,10,7,3\nBedok North,50,5,3,1\n")
-        self.assertEqual(world.sg_census(t.name), {"BEDOK": {"people": 100, "aged_65_plus": 10}})
+        self.assertEqual(world.sg_census(t.name), {"BEDOK": {"people": 100, "aged_65_plus": 10}, "TENGAH": {"people": 0, "aged_65_plus": 0}})
 
     def test_access_score(self):
         import world
