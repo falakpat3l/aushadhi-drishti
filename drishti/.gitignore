@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/cesium/
+pipeline/.cache/
+__pycache__/
+.env
+.env.*
+!.env.example

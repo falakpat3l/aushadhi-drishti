@@ -1,3 +1,15 @@
+# aushadhi-drishti
+
+**An open map of India's pharmacy supply side, built only from public data.**
+Live map: https://falakpat3l.github.io/aushadhi-drishti/
+
+This repository is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view) by Bilawal Sidhu (MIT). The new app lives in the [`drishti/`](drishti/) folder: start with [drishti/README.md](drishti/README.md). Everything outside `drishti/` (and `.github/workflows/drishti-*.yml`) is the original God's Eye View code, kept unchanged.
+
+The original God's Eye View README follows below, unchanged.
+
+---
+
+
 <div align="center">
 
 # 🌐 God's Eye View

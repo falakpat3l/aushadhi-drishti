@@ -1,0 +1,59 @@
+# Builds the aushadhi-drishti map (drishti/ folder), checks it in a headless
+# browser at 360 px and 1280 px, and publishes it to GitHub Pages.
+name: drishti pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["drishti/**", ".github/workflows/drishti-pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: drishti-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drishti
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: drishti/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run build
+      - name: Browser check (360 px and 1280 px, no console errors)
+        run: |
+          pip install playwright==1.50.0
+          python -m playwright install --with-deps chromium
+          python tests/browser_check.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: drishti/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: drishti/docs/images
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

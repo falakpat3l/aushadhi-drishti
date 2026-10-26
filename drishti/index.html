@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aushadhi-drishti</title>
+  <meta name="description" content="Open map of India's pharmacy supply side, built only from public data." />
+  <meta name="theme-color" content="#0b1117" />
+  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="map" aria-label="Map of India"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="./logo.svg" alt="" width="22" height="22" />
+      <div>
+        <h1>aushadhi-drishti</h1>
+        <p>India pharmacy supply map</p>
+      </div>
+    </div>
+    <form id="ask" class="ask" role="search" autocomplete="off">
+      <label for="ask-input" class="sr-only">Ask the map</label>
+      <input id="ask-input" type="search" placeholder="Ask the map, e.g. fewest generic stores in Gujarat" />
+      <button type="submit" aria-label="Ask">Ask</button>
+    </form>
+    <button id="panel-toggle" class="panel-toggle" aria-expanded="false" aria-controls="panel">Layers</button>
+  </header>
+
+  <aside id="panel" class="panel" aria-label="Map controls">
+    <section>
+      <h2>Layers</h2>
+      <div id="layer-list" class="layer-list"><p class="muted">No layers yet.</p></div>
+      <div id="legend" class="legend"></div>
+    </section>
+    <section id="answer-section" hidden>
+      <h2>Answer</h2>
+      <div id="answer"></div>
+    </section>
+    <section id="detail-section" hidden>
+      <h2 id="detail-title">Details</h2>
+      <div id="detail"></div>
+    </section>
+    <section>
+      <h2>About</h2>
+      <p>Built only from public data. Areas are shown as totals by district or pincode. No personal data is stored or shown.</p>
+      <p>Information only. Not for treatment decisions. Check stock and prices with the store.</p>
+      <p><a href="https://github.com/falakpat3l/aushadhi-drishti" target="_blank" rel="noopener">Code and data sources</a></p>
+    </section>
+  </aside>
+
+  <footer class="credits">
+    <div id="credit-line" class="credit-line"></div>
+  </footer>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
