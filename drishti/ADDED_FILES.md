@@ -36,3 +36,7 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/tests/fixtures/make_fixtures.py`, `cdsco_sample.pdf`, `nppa_sample.pdf`, `alerts_sample.json`, `medicines_sample.json`; changed `tests/test_pipeline.py`, `tests/phase_checks.py`
 - Added `drishti/docs/permission-requests.md`, `drishti/docs/KNOWN_GAPS.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
 
+## Phase 5
+- Added `drishti/src/ask.js`, `src/askRules.js`, `tests/ask.test.mjs`
+- Changed `drishti/src/main.js`, `src/ui.js`, `src/style.css`, `vite.config.js` (local-only AI helper), `.env.example`, `tests/phase_checks.py`, `docs/KNOWN_GAPS.md`, `README.md`, `GUIDE.md`, `CHANGELOG.md`, `.github/workflows/drishti-pages.yml` (runs the ask-rule tests)
+

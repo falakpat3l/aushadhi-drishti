@@ -29,8 +29,8 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 2 | Base layers for Gujarat: districts, population, Jan Aushadhi Kendras, health centres, OSM pharmacies and hospitals, pincode totals | Done |
 | 3 | Insights: people per Kendra, outlets per 10,000 people, and a gap score for where a new generic store helps most ([how it works](docs/gap-score.md)) | Done |
 | 4 | Medicine layers: CDSCO quality alert counts by district and month, with links to the official lists; medicine check linking a brand (via anukalpa) to its generic, NPPA price cap and alert count | Done (see known gaps) |
-| 5 | Ask the map | Next |
-| 6 | Weekly refresh | |
+| 5 | Ask the map: plain questions answered from the local data by rules; optional local AI with a key in `.env` | Done |
+| 6 | Weekly refresh and a design for opt-in stock sharing | Next |
 
 ## Folder map
 
@@ -44,6 +44,7 @@ drishti/
     credits.js          attribution line, always visible
     insights.js         gap score and per-person measures
     medicine.js         alerts layer, timeline, medicine check
+    ask.js, askRules.js "Ask the map" box and its rules
     layers/             one file per map layer
   public/               files served as they are (logo, built data)
   pipeline/             data build (Python): download, clean, place, write
@@ -70,7 +71,7 @@ drishti/
 
 | Phone (360 px) | Laptop (1280 px) |
 |---|---|
-| ![phone](docs/images/phone-360-medicines.png) | ![laptop](docs/images/desktop-1280-bharuch.png) |
+| ![phone](docs/images/phone-360-ask.png) | ![laptop](docs/images/desktop-1280-bharuch.png) |
 
 ## Known gaps
 

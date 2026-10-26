@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 (Phase 5)
+- "Ask the map" box: plain questions (rank districts, one district, compare, pincodes, medicine price) answered from local data by rules.
+- Optional AI only when running locally with a key in `.env` (Ollama, free and local, or Gemini free tier). The live site never uses AI.
+
 ## 0.4.0 (Phase 4)
 - CDSCO drug quality alerts as counts only (CDSCO's terms do not allow copying its lists): per month, per district of the maker's printed address, and per generic name, each linked to the official list. Spurious samples counted only at the reporting state. Map layer with a month timeline.
 - NPPA ceiling price parser and medicine check: brand (from anukalpa) to generic, price cap and how many alert samples mention it.

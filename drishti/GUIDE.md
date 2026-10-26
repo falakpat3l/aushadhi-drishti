@@ -34,3 +34,14 @@ GitHub Pages builds the site by itself after each push (see `.github/workflows/d
 
 Run `python3 pipeline/build.py`. It prints one line per source: `[ok]` or `[GAP]` with the reason. A source that fails never stops the build; the map shows what it has and `public/data/meta.json` records the gap.
 
+## Ask the map with a local AI (optional, free)
+
+The live site answers questions with built-in rules only. On your own Mac you can add an AI helper for questions the rules cannot read:
+
+1. Install Ollama (free): https://ollama.com
+2. In Terminal: `ollama pull llama3.2`
+3. Copy `.env.example` to `.env` and set `ASK_AI_PROVIDER=ollama`
+4. Run `npm run dev`
+
+`.env` is never committed (it is in `.gitignore`).
+

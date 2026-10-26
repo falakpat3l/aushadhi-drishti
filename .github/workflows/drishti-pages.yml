@@ -43,6 +43,7 @@ jobs:
         run: |
           pip install -r pipeline/requirements.txt
           python -m unittest discover tests
+          node --test tests/ask.test.mjs
           python pipeline/build.py
       - run: npm ci
       - run: npm run build

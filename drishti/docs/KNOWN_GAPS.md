@@ -20,3 +20,7 @@ Honest list of what the map does not do yet, and why. Updated each phase.
 1. On phones the map opens flat (2D) to stay fast; laptops get the 3D globe.
 2. Background tiles come from the public OpenStreetMap tile server, which is meant for light use. If the site becomes popular, switch to a self-hosted or free-tier tile service.
 
+## Ask the map
+
+1. Rules understand the common question shapes (rank, one district, compare, pincodes, medicine price). Other questions get example suggestions.
+2. The AI helper works only on your own computer with `npm run dev`; the live site has none, by design (no keys in a public page).

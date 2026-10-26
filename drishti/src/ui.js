@@ -18,13 +18,17 @@ export function setupPanel() {
     showDetail(title, html) {
       document.getElementById('detail-title').textContent = title;
       document.getElementById('detail').innerHTML = html;
-      document.getElementById('detail-section').hidden = false;
+      const sec = document.getElementById('detail-section');
+      sec.hidden = false;
       setOpen(true);
+      panel.scrollTo({ top: sec.offsetTop - 8, behavior: 'smooth' });
     },
     showAnswer(html) {
       document.getElementById('answer').innerHTML = html;
-      document.getElementById('answer-section').hidden = false;
+      const sec = document.getElementById('answer-section');
+      sec.hidden = false;
       setOpen(true);
+      panel.scrollTo({ top: sec.offsetTop - 8, behavior: 'smooth' });
     },
   };
 }

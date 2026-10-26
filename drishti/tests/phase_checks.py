@@ -62,4 +62,18 @@ def _stub(route, fx):
     return stub_outside(route)
 
 
-STEPS = [("district detail", district_detail), ("layer switches", layer_switches), ("medicine panel", medicine_panel)]
+def ask_box(page, name):
+    """Phase 5: the example question gets a ranked answer from local data."""
+    page.fill("#ask-input", "districts in Gujarat with the fewest generic stores per person")
+    page.press("#ask-input", "Enter")
+    page.wait_for_function("document.querySelector('#answer').innerText.includes('lowest')", timeout=15000)
+    first = page.inner_text("#answer ol li")
+    assert "Dohad" in first, f"Phase 5: expected Dohad first, got {first!r}"
+    assert page.eval_on_selector("#metric", "el => el.value") == "kendras_per_lakh", "Phase 5: map colour did not switch"
+    page.fill("#ask-input", "blah blah")
+    page.press("#ask-input", "Enter")
+    page.wait_for_function("document.querySelector('#answer').innerText.includes('Try one of these')", timeout=15000)
+    page.screenshot(path=f"docs/images/{name}-ask.png")
+
+
+STEPS = [("district detail", district_detail), ("layer switches", layer_switches), ("medicine panel", medicine_panel), ("ask box", ask_box)]

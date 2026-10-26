@@ -3,6 +3,7 @@ import './style.css';
 import { createMap } from './map.js';
 import { setupPanel } from './ui.js';
 import { registerLayers } from './layers/index.js';
+import { setupAsk } from './ask.js';
 
 const header = document.querySelector('.topbar');
 const syncTop = () => document.documentElement.style.setProperty('--top', `${header.offsetHeight}px`);
@@ -12,7 +13,7 @@ window.addEventListener('resize', syncTop);
 const viewer = createMap(document.getElementById('map'));
 const ui = setupPanel();
 
-// The ask box arrives in Phase 5.
+// The ask box shows once the data has loaded.
 document.getElementById('ask').hidden = true;
 
 // Handy for debugging in the browser console and for the browser tests.
@@ -21,6 +22,7 @@ window.__ad = { viewer, ui, ready: false };
 registerLayers(viewer, ui)
   .then((layers) => {
     window.__ad.layers = layers;
+    window.__ad.ask = setupAsk(ui, layers);
     window.__ad.ready = true;
   })
   .catch((err) => {
