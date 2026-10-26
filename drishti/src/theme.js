@@ -14,13 +14,13 @@ export const MAP_COLORS = {
     stateLine: 'rgba(0,0,0,0.55)',
     border: '#111111',
     dim: '#f0f0ee',
-    noData: '#dedede',
+    noData: '#d9d9d9',
     focus: '#0000ee',
     label: '#1a1a1a',
     labelHalo: 'rgba(255,255,255,0.92)',
     labelMuted: '#6b6f73',
-    warn: ['#f6f1e4', '#f0d39c', '#e7a364', '#d4663f', '#a8262a'],
-    seq: ['#eef3f6', '#c3d8e4', '#8db6cd', '#4d8db1', '#1d5c8a'],
+    // good to bad: green, yellow-green, sand, orange, red
+    scale: ['#2e9e5b', '#8cc56a', '#f0d77b', '#ef9a4f', '#d6463a'],
   },
   dark: {
     sea: '#0e1316',
@@ -31,13 +31,12 @@ export const MAP_COLORS = {
     stateLine: 'rgba(230,230,230,0.55)',
     border: '#e6e6e6',
     dim: '#1f2528',
-    noData: '#2c3134',
+    noData: '#3a3f42',
     focus: '#69cbd1',
     label: '#e6e6e6',
     labelHalo: 'rgba(14,19,22,0.9)',
     labelMuted: '#8b959b',
-    warn: ['#2a2b25', '#57492b', '#8c5c2c', '#c2612f', '#ef5a44'],
-    seq: ['#1a252b', '#1d4252', '#25697c', '#3693a3', '#69cbd1'],
+    scale: ['#2f8f58', '#7fb35c', '#cdb85a', '#d98745', '#de5244'],
   },
 };
 

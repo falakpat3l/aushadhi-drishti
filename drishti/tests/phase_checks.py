@@ -24,7 +24,7 @@ def layer_switches(page, name):
     assert page.eval_on_selector("#state-pick", "el => el.value") == "gujarat", "state picker did not change"
     assert "in Gujarat" in page.inner_text("#ranking"), "state ranking missing"
     assert page.eval_on_selector("#metric", "el => el.value") == "gap_score_state", "state gap score not shown"
-    for box in page.query_selector_all("input[data-layer]:not([disabled])"):
+    for box in page.query_selector_all("label:not([hidden]) > input[data-layer]"):
         if not box.is_checked():
             box.check()
     page.wait_for_timeout(2500)

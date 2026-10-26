@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1
+- Calmer panel: only switches that work right now are shown; everything not available yet is listed once under "Coming soon" at the bottom.
+- Colours mean the same everywhere: green is better, red is worse, grey is no data. The legend says so.
+- More space and rounded corners; the panel floats over the map on laptops and is a rounded bottom sheet on phones.
+
 ## 0.8.0 (Phase 8)
 - Flat map of India with MapLibre GL instead of the CesiumJS globe: sharp on Retina and phone screens, pinch, trackpad, scroll and double-tap zoom; north stays up.
 - Tap a state on the map to open it (same as picking it from the list); inside a state, tap a district for its details. A path at the top left (India / state / district) goes back.

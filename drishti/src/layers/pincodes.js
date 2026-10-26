@@ -14,7 +14,9 @@ export function pincodeLayer(map) {
   let c = mapColors();
 
   map.addSource('pincodes', { type: 'geojson', data: EMPTY, promoteId: 'pincode' });
-  const fill = () => ['match', ['coalesce', ['feature-state', 'cls'], -1], 0, c.seq[0], 1, c.seq[1], 2, c.seq[2], 3, c.seq[3], 4, c.seq[4], 'rgba(0,0,0,0)'];
+  // More outlets is better (green). Pincodes with no outlet on record are grey:
+  // OpenStreetMap misses many shops, so 'none mapped' is not the same as 'none'.
+  const fill = () => { const r = [...c.scale].reverse(); return ['match', ['coalesce', ['feature-state', 'cls'], -1], 0, r[1], 1, r[2], 2, r[3], 3, r[4], 4, r[4], c.noData]; };
   map.addLayer({ id: 'pincodes-fill', type: 'fill', source: 'pincodes', layout: { visibility: 'none' }, paint: { 'fill-color': fill(), 'fill-opacity': 0.85 } }, 'districts-line');
   map.addLayer({ id: 'pincodes-line', type: 'line', source: 'pincodes', layout: { visibility: 'none' }, paint: { 'line-color': c.districtLine, 'line-width': 0.6 } }, 'districts-line');
   onThemeChange(() => {
@@ -33,7 +35,7 @@ export function pincodeLayer(map) {
     const breaks = classBreaks(fc.features.map((f) => value(f.properties)).filter((v) => v > 0));
     for (const p of byPin.values()) {
       const v = value(p);
-      map.setFeatureState({ source: 'pincodes', id: p.pincode }, { cls: v > 0 ? classOf(v, breaks) : -1 });
+      map.setFeatureState({ source: 'pincodes', id: p.pincode }, { cls: v > 0 ? Math.min(classOf(v, breaks), 3) : -1 });
     }
     loaded = slug;
   }

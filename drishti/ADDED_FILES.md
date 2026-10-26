@@ -61,3 +61,6 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Rewrote `drishti/index.html`, `src/style.css`, `src/main.js`, `src/map.js`, `src/layers/index.js`, `layers/basemap.js`, `layers/districts.js`, `layers/pincodes.js`, `layers/points.js`; changed `src/medicine.js`, `src/ui.js`, `pipeline/build.py` (district label points)
 - Changed `drishti/package.json`, `package-lock.json`: added maplibre-gl, removed cesium and the copy step. `drishti/scripts/copy-cesium.mjs` and `drishti/src/cesiumBase.js` are kept but no longer used.
 - Changed `drishti/tests/phase_checks.py`, docs and screenshots
+
+## Phase 8 polish
+- Changed `drishti/index.html` (Coming soon section), `src/style.css`, `src/theme.js`, `src/insights.js`, `src/medicine.js`, `src/map.js`, `src/layers/index.js`, `layers/districts.js`, `layers/pincodes.js`, `tests/phase_checks.py`, `CHANGELOG.md`, screenshots

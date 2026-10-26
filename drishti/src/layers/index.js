@@ -44,10 +44,30 @@ export async function registerLayers(map, ui) {
       <label><input type="checkbox" data-layer="pincodes"><span>Pincodes <small id="pincode-note"></small></span></label>
       ${Object.entries(POINT_STYLES).map(([k, s]) => `
         <label><input type="checkbox" data-layer="${k}"><span><i class="dot" style="background:${s.color}"></i>${esc(s.label)} <small data-count="${k}"></small></span></label>`).join('')}
-      <label><input type="checkbox" data-layer="alerts" ${layers.alerts.count ? '' : 'disabled'}><span><i class="dot" style="background:#e0a21b"></i>Drug quality alerts <small>${layers.alerts.count ? `${layers.alerts.count.toLocaleString('en-IN')} samples` : 'none in this build'}</small></span></label>
+      <label><input type="checkbox" data-layer="alerts"><span><i class="dot" style="background:#e0a21b"></i>Drug quality alerts <small>${layers.alerts.count.toLocaleString('en-IN')} samples</small></span></label>
     </div>
+    <p class="hint" id="state-hint">Tap a state on the map, or pick one above, to see its pincodes, hospitals and health centres.</p>
     <div id="ranking"></div>
     <p class="note" id="data-date"></p>`;
+
+  // Things the map cannot show yet, listed once at the bottom of the panel
+  // instead of as greyed-out switches.
+  const SOON = [
+    ['Jan Aushadhi store locations', 'waiting for permission from PMBI to reuse their store list'],
+    ['Drug alert details', 'CDSCO allows counts only; permission for product and batch details has been asked'],
+    ['Medicine price caps', 'the NPPA list could not be reached yet'],
+    ['Licensed pharmacies per district', 'states do not publish their licence lists openly'],
+    ['Which pharmacies stock a medicine', 'pharmacies would opt in; designed, not built yet'],
+  ];
+  const soonList = document.getElementById('soon');
+  function drawSoon() {
+    const items = [...SOON];
+    if (!layers.alerts.count) items.splice(1, 1, ['Drug quality alerts', 'CDSCO lists were not read in this build']);
+    const osmCount = meta.states.reduce((t, s) => t + s.counts.pharmacy + s.counts.hospital, 0);
+    if (!osmCount) items.push(['Pharmacies and hospitals from OpenStreetMap', 'added on the next weekly refresh']);
+    if (current && !current.centre_data) items.push([`Health centres in ${current.name}`, 'not in the NIC health centre file']);
+    soonList.innerHTML = items.map(([t, why]) => `<li><strong>${esc(t)}</strong><span>${esc(why)}</span></li>`).join('');
+  }
 
   const $ = (sel) => ui.layerList.querySelector(sel);
   const ranking = $('#ranking');
@@ -66,21 +86,26 @@ export async function registerLayers(map, ui) {
     ranking.innerHTML = rankingHtml(feats, meta.india.gap_weights, current ? current.name : null);
   }
 
+  // Only switches that can do something right now are shown.
   function updateSwitches() {
-    $('#district-note').textContent = current ? `${current.districts} in ${current.name}` : `${meta.india.districts} in India`;
-    $('#pincode-note').textContent = current ? `${current.pincodes.toLocaleString('en-IN')}` : 'pick a state';
-    $('input[data-layer=pincodes]').disabled = !current;
-    for (const k of Object.keys(POINT_STYLES)) {
-      const box = $(`input[data-layer=${k}]`);
-      const n = current ? current.counts[k] : 0;
-      box.disabled = !current || !n;
-      if (box.disabled && box.checked) {
+    const show = (box, on) => {
+      box.closest('label').hidden = !on;
+      if (!on && box.checked) {
         box.checked = false;
-        layers[k].setVisible(false);
+        box.dispatchEvent(new Event('change'));
       }
-      const why = k === 'jak' ? 'waiting for store list' : k === 'gov' && current && !current.centre_data ? 'no NIC data here' : 'none in this build';
-      $(`[data-count=${k}]`).textContent = !current ? 'pick a state' : n ? n.toLocaleString('en-IN') : why;
+    };
+    $('#district-note').textContent = current ? `${current.districts}` : `${meta.india.districts}`;
+    $('#pincode-note').textContent = current ? current.pincodes.toLocaleString('en-IN') : '';
+    show($('input[data-layer=pincodes]'), !!current);
+    for (const k of Object.keys(POINT_STYLES)) {
+      const n = current ? current.counts[k] : 0;
+      show($(`input[data-layer=${k}]`), n > 0);
+      $(`[data-count=${k}]`).textContent = n ? n.toLocaleString('en-IN') : '';
     }
+    show($('input[data-layer=alerts]'), layers.alerts.count > 0);
+    $('#state-hint').hidden = !!current;
+    drawSoon();
   }
 
   async function pickState(slug, { fly = true } = {}) {

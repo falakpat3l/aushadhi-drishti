@@ -8,35 +8,37 @@ const num = (v, d = 0) => (v == null ? 'n/a' : Number(v).toLocaleString('en-IN',
 addMetrics([
   {
     id: 'gap_score',
+    worse: 'high',
     label: 'Gap score: where a new generic store helps most',
     get: (p) => p.gap_score,
     fmt: (v) => num(v),
-    palette: 'warn',
     note: '0 = well served, 100 = biggest gap, compared with all districts in India.',
   },
   {
     id: 'gap_score_state',
+    worse: 'high',
     label: 'Gap score within the state',
     get: (p) => p.gap_score_state,
     fmt: (v) => num(v),
-    palette: 'warn',
     note: '0 = well served, 100 = biggest gap, compared with other districts in the same state.',
   },
   {
     id: 'people_per_kendra',
+    worse: 'high',
     label: 'People per Jan Aushadhi Kendra',
     get: (p) => p.people_per_kendra,
     fmt: (v) => num(v),
-    palette: 'warn',
   },
   {
     id: 'kendras_per_lakh',
+    worse: 'low',
     label: 'Jan Aushadhi Kendras per 1 lakh people',
     get: (p) => p.kendras_per_lakh,
     fmt: (v) => num(v, 2),
   },
   {
     id: 'outlets_per_10k',
+    worse: 'low',
     label: 'Medicine outlets per 10,000 people',
     get: (p) => (p.osm_pharmacy ? p.outlets_per_10k : null),
     fmt: (v) => num(v, 2),
@@ -44,10 +46,10 @@ addMetrics([
   },
   {
     id: 'centres_per_kendra',
+    worse: 'high',
     label: 'Government health centres per Kendra',
     get: (p) => p.centres_per_kendra,
     fmt: (v) => num(v, 1),
-    palette: 'warn',
   },
 ]);
 

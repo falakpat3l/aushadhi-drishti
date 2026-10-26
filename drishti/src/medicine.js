@@ -93,7 +93,7 @@ export async function setupMedicines(map, ui) {
   function drawTimeline() {
     const ms = alerts.months;
     if (!ms.length) {
-      tl.innerHTML = '<p class="note">No drug quality alerts in this build. See the data notes.</p>';
+      tl.innerHTML = ''; // listed under Coming soon instead
       return;
     }
     const max = Math.max(...ms.map((m) => m.nsq + m.spurious));

@@ -45,7 +45,7 @@ export async function addDistricts(map, ui) {
   let focus = null;
   let selected = null;
 
-  map.addLayer({ id: 'districts-fill', type: 'fill', source: 'districts', paint: { 'fill-color': fillColor(c.warn, c), 'fill-opacity': 0.92 } }, BEFORE);
+  map.addLayer({ id: 'districts-fill', type: 'fill', source: 'districts', paint: { 'fill-color': fillColor(c.scale, c), 'fill-opacity': 0.92 } }, BEFORE);
   map.addLayer({ id: 'districts-line', type: 'line', source: 'districts', paint: { 'line-color': c.districtLine, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.3, 8, 1] } }, BEFORE);
   map.addLayer({
     id: 'districts-focus', type: 'line', source: 'districts',
@@ -66,7 +66,8 @@ export async function addDistricts(map, ui) {
     const inView = (p) => !focus || p.slug === focus;
     const vals = [...byLgd.values()].filter(inView).map((p) => m.get(p));
     const breaks = classBreaks(vals);
-    const pal = c[m.palette || 'seq'];
+    // Classes run from low to high values; colour them good (green) to bad (red).
+    const pal = m.worse === 'low' ? [...c.scale].reverse() : c.scale;
     for (const p of byLgd.values()) {
       map.setFeatureState({ source: 'districts', id: p.lgd }, { cls: classOf(m.get(p), breaks), dim: !inView(p) });
     }
@@ -133,6 +134,7 @@ function drawLegend(el, m, vals, breaks, pal) {
     <div class="legend-title">${esc(m.label)}</div>
     <div class="ramp">${pal.map((col, i) => `<span style="background:${col}" title="${esc(m.fmt(edges[i]))} to ${esc(m.fmt(edges[i + 1]))}"></span>`).join('')}</div>
     <div class="ends"><span>${esc(m.fmt(edges[0]))}</span><span>${esc(m.fmt(edges[edges.length - 1]))}</span></div>
+    <div class="key"><span><i style="background:${pal[m.worse === 'low' ? 4 : 0]}"></i>better</span><span><i style="background:${pal[m.worse === 'low' ? 0 : 4]}"></i>worse</span><span><i class="nodata"></i>no data</span></div>
     ${m.note ? `<div class="note">${esc(m.note)}</div>` : ''}`;
 }
 
