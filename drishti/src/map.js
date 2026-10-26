@@ -2,38 +2,40 @@
 // No street-map tiles and no API keys: everything on it comes from the
 // boundary and data files in public/. Pinch, scroll, trackpad and
 // double-tap zoom all work; rotation and tilt are off so north stays up.
-import maplibregl from 'maplibre-gl';
+// The 'CSP' build of MapLibre with its worker as a separate file: this is the
+// build that survives Vite's minifier (the default one breaks in version 5).
+import maplibregl from 'maplibre-gl/dist/maplibre-gl-csp.js';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-csp-worker.js?url';
+
+maplibregl.setWorkerUrl(workerUrl);
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { mapColors } from './theme.js';
 import { addCredit } from './credits.js';
 
 export const INDIA_BOUNDS = [[68.0, 6.5], [97.5, 37.2]];
 
-export function createMap(container) {
+export function createMap(container, arriving = null) {
   const c = mapColors();
   const map = new maplibregl.Map({
     container,
     style: {
       version: 8,
+      projection: { type: 'globe' }, // a round globe when zoomed out, flat when zoomed in
       glyphs: `${import.meta.env.BASE_URL}fonts/{fontstack}/{range}.pbf`,
       sources: {},
       layers: [{ id: 'sea', type: 'background', paint: { 'background-color': c.sea } }],
     },
-    bounds: INDIA_BOUNDS,
-    fitBoundsOptions: { padding: framePadding() },
-    maxBounds: [[50, -5], [115, 45]],
-    minZoom: 2.8,
+    // Arriving from another country: start where the flight left off, zoomed out.
+    ...(arriving ? { center: arriving.center, zoom: 2.4 } : { bounds: INDIA_BOUNDS, fitBoundsOptions: { padding: framePadding() } }),
+    minZoom: 1,
     maxZoom: 14,
-    dragRotate: false,
     pitchWithRotate: false,
     touchPitch: false,
     attributionControl: false,
     pixelRatio: Math.min(window.devicePixelRatio || 1, 3), // sharp on phones and Retina screens
     fadeDuration: 150,
   });
-  map.touchZoomRotate.disableRotation();
-  map.keyboard.disableRotation();
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), 'bottom-right');
 
   addCredit('engine', 'Map engine <a href="https://maplibre.org" target="_blank" rel="noopener">MapLibre</a>');
   addCredit('gev', 'Idea from <a href="https://github.com/bilawalsidhu/gods-eye-view" target="_blank" rel="noopener">God\'s Eye View</a> by Bilawal Sidhu');
@@ -51,7 +53,7 @@ export function framePadding() {
 }
 
 export function fitTo(map, bounds, animate = true) {
-  map.fitBounds(bounds, { padding: framePadding(), duration: animate ? 900 : 0, maxZoom: 9 });
+  map.fitBounds(bounds, { padding: framePadding(), duration: animate ? 1400 : 0, maxZoom: 9, essential: true });
 }
 
 export function resetView(map, animate = true) {

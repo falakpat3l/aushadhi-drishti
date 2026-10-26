@@ -100,7 +100,7 @@ def world_view(page, name):
     p2.route("**/*", stub_outside)
     p2.goto(page.url.split("?")[0] + "?country=nz", wait_until="networkidle")
     p2.wait_for_function("window.__ad && window.__ad.ready", timeout=30000)
-    assert p2.eval_on_selector("#country-pick", "el => el.value") == "nz", "country switch not set"
+    assert "New Zealand" in p2.inner_text(".tabs button[aria-selected=true]"), "country tab not set"
     assert "New Zealand" in p2.inner_text("#crumbs"), "country title missing"
     assert p2.inner_text("#ranking").count("\n") >= 3, "country ranking missing"
     p2.screenshot(path=f"docs/images/{name}-nz.png")

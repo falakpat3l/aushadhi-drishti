@@ -6,9 +6,9 @@ const listeners = new Set();
 // Map colours for each mode. Page colours live in style.css.
 export const MAP_COLORS = {
   light: {
-    sea: '#e8edf0',
-    neighbour: '#f3f3f1',
-    neighbourLine: '#c9cdd0',
+    sea: '#dde5ea',
+    neighbour: '#ececea',
+    neighbourLine: '#cfd2d4',
     land: '#ffffff',
     districtLine: 'rgba(0,0,0,0.16)',
     stateLine: 'rgba(0,0,0,0.55)',
@@ -20,12 +20,12 @@ export const MAP_COLORS = {
     labelHalo: 'rgba(255,255,255,0.92)',
     labelMuted: '#6b6f73',
     // good to bad: green, yellow-green, sand, orange, red
-    scale: ['#2e9e5b', '#8cc56a', '#f0d77b', '#ef9a4f', '#d6463a'],
+    scale: ['#1f9e89', '#8fcf9f', '#f3e3a6', '#f2a167', '#d4553d'],
   },
   dark: {
-    sea: '#0e1316',
-    neighbour: '#181d20',
-    neighbourLine: '#2c3438',
+    sea: '#0b1014',
+    neighbour: '#1c2023',
+    neighbourLine: '#2c3236',
     land: '#1b2124',
     districtLine: 'rgba(255,255,255,0.14)',
     stateLine: 'rgba(230,230,230,0.55)',
@@ -36,7 +36,7 @@ export const MAP_COLORS = {
     label: '#e6e6e6',
     labelHalo: 'rgba(14,19,22,0.9)',
     labelMuted: '#8b959b',
-    scale: ['#2f8f58', '#7fb35c', '#cdb85a', '#d98745', '#de5244'],
+    scale: ['#2aa190', '#7dbb8f', '#cdbf7e', '#e0905a', '#e45b44'],
   },
 };
 

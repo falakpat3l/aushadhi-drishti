@@ -5,10 +5,13 @@ import { setupPanel } from './ui.js';
 import { registerLayers } from './layers/index.js';
 import { setupAsk } from './ask.js';
 import { startWorld } from './world.js';
+import { arrivingFlight } from './countries.js';
 
 setupTheme();
 const ui = setupPanel();
-const map = createMap(document.getElementById('map'));
+const flight = arrivingFlight();
+const map = createMap(document.getElementById('map'), flight);
+window.__flight = flight;
 
 // The ask box shows once the data has loaded.
 document.getElementById('ask').hidden = true;

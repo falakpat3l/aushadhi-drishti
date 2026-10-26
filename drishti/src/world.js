@@ -7,14 +7,8 @@ import { classBreaks, classOf, fillColor, drawLegend } from './layers/districts.
 import { fitTo } from './map.js';
 import { esc } from './ui.js';
 import { addCredit } from './credits.js';
+import { countryTabs, goToCountry, addWorldLand } from './countries.js';
 
-export const COUNTRIES = [
-  { code: '', name: 'India' },
-  { code: 'sg', name: 'Singapore' },
-  { code: 'nz', name: 'New Zealand' },
-  { code: 'au', name: 'Australia' },
-  { code: 'eu', name: 'Europe' },
-];
 
 const n0 = (v) => (v == null ? 'n/a' : Math.round(v).toLocaleString('en-GB'));
 const MEASURES = [
@@ -36,18 +30,19 @@ const SOON = {
 export async function startWorld(map, ui, code) {
   const base = `world/${code}/`;
   const [meta, fc, pts, bm] = await Promise.all(['meta.json', 'regions.geojson', 'points.json', 'basemap.json'].map((f) => loadJSON(base + f)));
+  // Europe: countries act like India's states (pick one to see its regions).
+  const groups = meta.groups ? await loadJSON(base + 'groups.geojson') : null;
   // Europe has pharmacists per country instead of pharmacy locations.
   const measures = meta.per_pharmacist
     ? MEASURES.filter((m) => m.id !== 'per_10k').map((m) => (m.id === 'people_per_pharmacy' ? { ...m, label: 'People per pharmacist (country figure)', title: 'How many people share one pharmacist?', sub: 'Country figure, Eurostat' } : m))
     : MEASURES;
   let c = mapColors();
-  map.setMaxBounds(null);
-  map.setMinZoom(2);
 
   // Background: the country, its neighbours, city names.
   map.addSource('w-near', { type: 'geojson', data: { type: 'FeatureCollection', features: bm.neighbours.map((n) => ({ type: 'Feature', properties: { name: n.name }, geometry: n.geometry })) } });
   map.addLayer({ id: 'w-near', type: 'fill', source: 'w-near', paint: { 'fill-color': c.neighbour } });
   map.addLayer({ id: 'w-near-line', type: 'line', source: 'w-near', paint: { 'line-color': c.neighbourLine, 'line-width': 0.8 } });
+  await addWorldLand(map, 'w-near');
 
   // Regions.
   const byId = new Map(fc.features.map((f, i) => [i + 1, f.properties]));
@@ -55,6 +50,13 @@ export async function startWorld(map, ui, code) {
   map.addLayer({ id: 'w-fill', type: 'fill', source: 'w-regions', paint: { 'fill-color': fillColor(c.scale, c), 'fill-opacity': 0.92 } });
   map.addLayer({ id: 'w-line', type: 'line', source: 'w-regions', paint: { 'line-color': c.stateLine, 'line-width': 0.8 } });
   map.addLayer({ id: 'w-focus', type: 'line', source: 'w-regions', paint: { 'line-color': c.focus, 'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 0] } });
+  let byGroup = new Map();
+  if (groups) {
+    byGroup = new Map(groups.features.map((f, i) => [i + 1, f.properties]));
+    map.addSource('w-groups', { type: 'geojson', data: { type: 'FeatureCollection', features: groups.features.map((f, i) => ({ type: 'Feature', id: i + 1, properties: {}, geometry: f.geometry })) } });
+    map.addLayer({ id: 'w-gfill', type: 'fill', source: 'w-groups', paint: { 'fill-color': fillColor(c.scale, c), 'fill-opacity': 0.92 } }, 'w-line');
+    map.addLayer({ id: 'w-gline', type: 'line', source: 'w-groups', paint: { 'line-color': c.border, 'line-width': 1 } });
+  }
   if (bm.country) {
     map.addSource('w-country', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: bm.country } });
     map.addLayer({ id: 'w-border', type: 'line', source: 'w-country', paint: { 'line-color': c.border, 'line-width': 1.6 } });
@@ -71,7 +73,9 @@ export async function startWorld(map, ui, code) {
 
   // Panel.
   ui.layerList.innerHTML = `
-    <div class="field"><label for="country-pick">Country</label><select id="country-pick">${COUNTRIES.map((k) => `<option value="${k.code}" ${k.code === code ? 'selected' : ''}>${k.name}</option>`).join('')}</select></div>
+    <div id="country-tabs"></div>
+    ${groups ? `<div class="field"><label for="w-area">Area</label><select id="w-area"><option value="">All ${esc(meta.name)}</option>${groups.features.map((f) => `<option value="${esc(f.properties.id)}">${esc(f.properties.name)}</option>`).join('')}</select></div>
+    <div class="field"><span class="field-label">Show by</span><div class="seg" role="group" aria-label="Show by"><button type="button" data-wlevel="group">Countries</button><button type="button" data-wlevel="region">Regions</button></div></div>` : ''}
     <div class="field"><label for="w-metric">Colour by</label><select id="w-metric">${measures.map((m) => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></div>
     <div class="switches">
       <label><input type="checkbox" id="w-dots-box" ${pts.rows.length ? '' : 'disabled'}><span><i class="dot" style="background:#d4860b"></i>Pharmacies <small>${pts.rows.length ? pts.rows.length.toLocaleString('en-GB') : 'none in this build'}</small></span></label>
@@ -80,27 +84,62 @@ export async function startWorld(map, ui, code) {
     <p class="note">Data built ${esc(meta.built)}. ${esc(pts.label)}.</p>`;
   document.getElementById('soon').innerHTML = (SOON[code] || []).map(([t, why]) => `<li><strong>${esc(t)}</strong><span>${esc(why)}</span></li>`).join('');
   const sel = document.getElementById('w-metric');
-  document.getElementById('country-pick').addEventListener('change', (e) => goToCountry(e.target.value));
+  countryTabs(document.getElementById('country-tabs'), code, map);
   document.getElementById('w-dots-box').addEventListener('change', (e) => map.setLayoutProperty('w-dots', 'visibility', e.target.checked ? 'visible' : 'none'));
 
   let selected = null;
+  let level = groups ? 'group' : 'region'; // Europe opens by country
+  let area = null; // a country code, when one is picked (Europe)
+  const inArea = (p) => !area || p.country === area;
   function paint() {
     const m = measures.find((x) => x.id === sel.value);
-    const vals = [...byId.values()].map((p) => p[m.id]);
-    const breaks = classBreaks(vals);
     const pal = m.worse === 'low' ? [...c.scale].reverse() : c.scale;
-    for (const [id, p] of byId) map.setFeatureState({ source: 'w-regions', id }, { cls: classOf(p[m.id], breaks) });
-    map.setPaintProperty('w-fill', 'fill-color', fillColor(pal, c));
+    const showGroups = level === 'group';
+    if (groups) {
+      map.setLayoutProperty('w-gfill', 'visibility', showGroups ? 'visible' : 'none');
+      map.setLayoutProperty('w-fill', 'visibility', showGroups ? 'none' : 'visible');
+      document.querySelectorAll('button[data-wlevel]').forEach((b) => b.classList.toggle('on', b.dataset.wlevel === level));
+    }
+    const pool = showGroups ? byGroup : new Map([...byId].filter(([, p]) => inArea(p)));
+    const vals = [...pool.values()].map((p) => p[m.id]);
+    const breaks = classBreaks(vals);
+    if (showGroups) {
+      for (const [id, p] of byGroup) map.setFeatureState({ source: 'w-groups', id }, { cls: classOf(p[m.id], breaks) });
+      map.setPaintProperty('w-gfill', 'fill-color', fillColor(pal, c));
+    } else {
+      for (const [id, p] of byId) map.setFeatureState({ source: 'w-regions', id }, { cls: classOf(p[m.id], breaks), dim: !inArea(p) });
+      map.setPaintProperty('w-fill', 'fill-color', fillColor(pal, c));
+    }
     drawLegend(ui.legend, { ...m, label: m.label, source: sourceLine(code) }, vals, breaks, pal);
     title(m);
-    const top = [...byId.entries()].filter(([, p]) => p.access_rank).sort((a, b) => a[1].access_rank - b[1].access_rank).slice(0, 5);
-    document.getElementById('ranking').innerHTML = `<p class="note"><strong>Where one more pharmacy would help most</strong></p>
-      <ol class="results">${top.map(([id, p]) => `<li><button type="button" data-id="${id}">${esc(p.name)}</button> ${n0(p.access_score)}</li>`).join('')}</ol>
+    const top = [...pool.entries()].filter(([, p]) => p.access_score != null).sort((a, b) => b[1].access_score - a[1].access_score).slice(0, 5);
+    const where = showGroups ? 'Countries' : area ? `Regions of ${byGroupCode(area)?.name || area}` : 'Places';
+    document.getElementById('ranking').innerHTML = `<p class="note"><strong>${esc(where)} where one more pharmacy would help most</strong></p>
+      <ol class="results">${top.map(([id, p]) => `<li><button type="button" data-${showGroups ? 'gid' : 'id'}="${id}">${esc(p.name)}</button> ${n0(p.access_score)}</li>`).join('')}</ol>
       <p class="note">Access score: people per ${meta.per_pharmacist ? 'pharmacist' : 'pharmacy'} 60%, share aged 65 and over 40%.</p>`;
   }
+  function byGroupCode(codeId) {
+    return [...byGroup.values()].find((g) => g.id === codeId);
+  }
+  function pickArea(codeId) {
+    area = codeId || null;
+    const a = document.getElementById('w-area');
+    if (a) a.value = area || '';
+    if (area) {
+      level = 'region';
+      const b = byGroupCode(area)?.bbox;
+      if (b) fitTo(map, [[b[0], b[1]], [b[2], b[3]]]);
+    } else {
+      const [w, s, e, n] = meta.bbox;
+      fitTo(map, [[w, s], [e, n]]);
+    }
+    paint();
+  }
   function title(m, place) {
-    ui.crumbs.innerHTML = `<div class="path"><button type="button" data-go="india">India</button><i>/</i><span>${esc(meta.name)}</span>${place ? `<i>/</i><span>${esc(place)}</span>` : ''}</div>
-      <h1>${esc(m.title)}</h1><p>By ${esc(meta.unit)}, ${esc(meta.name)}. ${esc(m.sub)}</p>`;
+    const by = level === 'group' ? 'country' : meta.unit;
+    const where = area ? byGroupCode(area)?.name || area : meta.name;
+    ui.crumbs.innerHTML = `<div class="path"><button type="button" data-go="india">India</button><i>/</i>${area ? `<button type="button" data-go="all">${esc(meta.name)}</button><i>/</i>` : ''}<span>${esc(where)}</span>${place ? `<i>/</i><span>${esc(place)}</span>` : ''}</div>
+      <h1>${esc(m.title)}</h1><p>By ${esc(by)}, ${esc(where)}. ${esc(m.sub)}</p>`;
   }
   function open(id, fly) {
     const p = byId.get(id);
@@ -125,12 +164,21 @@ export async function startWorld(map, ui, code) {
   }
 
   sel.addEventListener('change', paint);
+  document.getElementById('w-area')?.addEventListener('change', (e) => pickArea(e.target.value));
+  document.querySelectorAll('button[data-wlevel]').forEach((b) => b.addEventListener('click', () => {
+    level = b.dataset.wlevel;
+    if (level === 'group') area = null;
+    paint();
+  }));
   document.getElementById('ranking').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-id]');
     if (b) open(Number(b.dataset.id), true);
+    const g = e.target.closest('button[data-gid]');
+    if (g) pickArea(byGroup.get(Number(g.dataset.gid)).id);
   });
   ui.crumbs.addEventListener('click', (e) => {
-    if (e.target.closest('button[data-go=india]')) goToCountry('');
+    if (e.target.closest('button[data-go=india]')) goToCountry('', map);
+    if (e.target.closest('button[data-go=all]')) pickArea(null);
   });
   map.on('click', (e) => {
     const box = [[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]];
@@ -140,10 +188,19 @@ export async function startWorld(map, ui, code) {
       ui.showDetail('Pharmacy', `<table class="kv"><tr><td>Name</td><td>${esc(typeof r[2] === 'string' && !/^[nwr]\d+$/.test(r[2]) ? r[2] : 'Pharmacy (OpenStreetMap)')}</td></tr><tr><td>Source</td><td>${esc(pts.label)}</td></tr></table>`);
       return;
     }
+    if (level === 'group') {
+      const g = map.queryRenderedFeatures(e.point, { layers: ['w-gfill'] })[0];
+      if (g) pickArea(byGroup.get(g.id).id);
+      return;
+    }
     const f = map.queryRenderedFeatures(e.point, { layers: ['w-fill'] })[0];
-    if (f) open(f.id, false);
+    if (!f) return;
+    const p = byId.get(f.id);
+    if (groups && !inArea(p)) return pickArea(p.country);
+    open(f.id, false);
   });
   map.on('mousemove', 'w-fill', () => (map.getCanvas().style.cursor = 'pointer'));
+  if (groups) map.on('mousemove', 'w-gfill', () => (map.getCanvas().style.cursor = 'pointer'));
   map.on('mouseleave', 'w-fill', () => (map.getCanvas().style.cursor = ''));
   onThemeChange(() => {
     c = mapColors();
@@ -153,6 +210,7 @@ export async function startWorld(map, ui, code) {
     map.setPaintProperty('w-line', 'line-color', c.stateLine);
     map.setPaintProperty('w-focus', 'line-color', c.focus);
     if (map.getLayer('w-border')) map.setPaintProperty('w-border', 'line-color', c.border);
+    if (map.getLayer('w-gline')) map.setPaintProperty('w-gline', 'line-color', c.border);
     for (const [k, v] of Object.entries(text(c))) map.setPaintProperty('w-names', k, v);
     paint();
   });
@@ -160,15 +218,8 @@ export async function startWorld(map, ui, code) {
   addCredit('world', creditLine(code));
   paint();
   const [w, s, e, n] = meta.bbox;
-  fitTo(map, [[w, s], [e, n]], false);
+  fitTo(map, [[w, s], [e, n]], !!window.__flight); // fly in when arriving from another country
   return { meta, open, paint };
-}
-
-export function goToCountry(code) {
-  const url = new URL(window.location.href);
-  if (code) url.searchParams.set('country', code);
-  else url.searchParams.delete('country');
-  window.location.href = url.toString();
 }
 
 const SOURCES = {

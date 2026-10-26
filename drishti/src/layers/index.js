@@ -14,7 +14,7 @@ import { districtDetail, pincodeDetail } from '../details.js';
 import { rankingHtml } from '../insights.js';
 import { setupMedicines } from '../medicine.js';
 import { aboutMetric } from '../metrics.js';
-import { COUNTRIES, goToCountry } from '../world.js';
+import { countryTabs, addWorldLand } from '../countries.js';
 import { resetView, fitTo } from '../map.js';
 
 const EMPTY = { jak: [], pharmacy: [], hospital: [], gov: [] };
@@ -23,6 +23,7 @@ const GOV_TYPES = { DHO: 'District hospital', THO: 'Taluka hospital', CHC: 'Comm
 export async function registerLayers(map, ui) {
   const meta = await loadJSON('meta.json');
   await addBasemap(map);
+  await addWorldLand(map, 'neighbours-fill');
   const districts = await addDistricts(map, ui);
   const pincodes = pincodeLayer(map, ui);
   const states = await addStates(map, ui);
@@ -40,7 +41,7 @@ export async function registerLayers(map, ui) {
   layers.alerts = await setupMedicines(map, ui);
 
   ui.layerList.innerHTML = `
-    <div class="field"><label for="country-pick">Country</label><select id="country-pick">${COUNTRIES.map((k) => `<option value="${k.code}">${k.name}</option>`).join('')}</select></div>
+    <div id="country-tabs"></div>
     <div class="field"><label for="state-pick">Area</label>
       <select id="state-pick"><option value="">All India</option>
         ${meta.states.map((s) => `<option value="${s.slug}">${esc(s.name)}</option>`).join('')}</select></div>
@@ -247,7 +248,7 @@ export async function registerLayers(map, ui) {
   });
   ui.layerList.querySelectorAll('button[data-level]').forEach((b) => b.addEventListener('click', () => setLevel(b.dataset.level)));
   statePick.addEventListener('change', () => pickState(statePick.value));
-  $('#country-pick').addEventListener('change', (e) => goToCountry(e.target.value));
+  countryTabs($('#country-tabs'), '', map);
   ui.layerList.querySelectorAll('input[data-layer]').forEach((box) => {
     box.addEventListener('change', () => {
       const id = box.dataset.layer;
@@ -257,6 +258,7 @@ export async function registerLayers(map, ui) {
   document.getElementById('data-date').textContent = `Data built ${meta.built}.`;
   await pickState(null, { fly: false });
   setLevel('district');
+  if (window.__flight) resetView(map); // finish the flight from another country
 
   addCredit('lgd', 'Districts: LGD via <a href="https://github.com/yashveeeeeeer/india-geodata" target="_blank" rel="noopener">india-geodata</a>');
   addCredit('census', 'Population: Census 2011');

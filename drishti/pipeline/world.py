@@ -50,6 +50,7 @@ WEIGHTS = {"people_per_pharmacy": 0.6, "share_65": 0.4}
 AU_POPULATION = "https://data.api.abs.gov.au/rest/data/ABS,ERP_Q,1.0.0/all?startPeriod={}&format=csvfilewithlabels"
 AU_OSM = "https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf"
 EU_REGIONS = "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_20M_2024_4326_LEVL_2.geojson"
+EU_COUNTRY_SHAPES = "https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_20M_2024_4326_LEVL_0.geojson"
 EU_POPULATION = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/demo_r_pjanaggr3/A.NR.T.TOTAL+Y_GE65.?format=SDMX-CSV&startPeriod={}"
 EU_PHARMACISTS = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/hlth_rs_prs1/A.HAB_P..OC2262.?format=SDMX-CSV&startPeriod=2015"
 
@@ -321,6 +322,33 @@ def build_eu(args):
     return regions, [], "Pharmacists per country (Eurostat); no pharmacy dots for Europe"
 
 
+def eu_groups(regions, shapes):
+    """Countries of Europe, used like India's states: the regions' numbers
+    added up per country, with an access score among countries.
+    `shapes` is {country code: (name, shapely geometry)}."""
+    groups = {}
+    for r in regions:
+        g = groups.setdefault(r["country"], {"id": r["country"], "people": 0, "aged_65_plus": 0, "regions": 0, "people_per_pharmacy": r.get("people_per_pharmacist")})
+        g["people"] += r.get("people", 0)
+        g["aged_65_plus"] += r.get("aged_65_plus", 0)
+        g["regions"] += 1
+    out = []
+    for code, g in groups.items():
+        name, geom = shapes.get(code, (code, None))
+        if geom is None:
+            geom = unary_union([r["geom"] for r in regions if r["country"] == code])
+        g["name"], g["geom"] = name, geom
+        g["share_65"] = round(g["aged_65_plus"] / g["people"] * 100, 1) if g["people"] else None
+        out.append(g)
+    ranks = {k: percentile_ranks([g[k] for g in out], "high") for k in WEIGHTS}
+    for i, g in enumerate(out):
+        parts = {k: ranks[k][i] for k in WEIGHTS if ranks[k][i] is not None}
+        g["access_score"] = round(sum(parts[k] * WEIGHTS[k] for k in parts) / sum(WEIGHTS[k] for k in parts), 1) if parts else None
+    for n, g in enumerate(sorted((g for g in out if g["access_score"] is not None), key=lambda g: -g["access_score"]), 1):
+        g["access_rank"] = n
+    return out
+
+
 # ---------- shared ----------
 
 def add_measures(regions, points):
@@ -373,7 +401,7 @@ def basemap(cfg, args):
     return {"country": mapping(own) if own else None, "neighbours": near, "labels": labels}
 
 
-def write(code, cfg, regions, points, point_label, base):
+def write(code, cfg, regions, points, point_label, base, groups=None):
     out = OUT / "world" / code
     out.mkdir(parents=True, exist_ok=True)
     feats = []
@@ -383,6 +411,16 @@ def write(code, cfg, regions, points, point_label, base):
         props["label"] = [round(lp.x, 4), round(lp.y, 4)]
         feats.append(geo.feature(r["geom"], props, {"sg": 0.0005, "nz": 0.005}.get(code, 0.01)))
     (out / "regions.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
+    if groups:
+        gfeats = []
+        for g in groups:
+            props = {k: v for k, v in g.items() if k != "geom"}
+            lp = g["geom"].representative_point()
+            props["label"] = [round(lp.x, 3), round(lp.y, 3)]
+            b = g["geom"].intersection(box(*cfg["bbox"])).bounds
+            props["bbox"] = [round(x, 3) for x in b]
+            gfeats.append(geo.feature(g["geom"], props, 0.02))
+        (out / "groups.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": gfeats}, separators=(",", ":")))
     (out / "points.json").write_text(json.dumps({"label": point_label, "rows": points}, separators=(",", ":")))
     (out / "basemap.json").write_text(json.dumps(base, separators=(",", ":")))
     xs = [c for r in regions for c in r["geom"].bounds[::2]]
@@ -392,6 +430,7 @@ def write(code, cfg, regions, points, point_label, base):
         "bbox": [round(min(xs), 3), round(min(ys), 3), round(max(xs), 3), round(max(ys), 3)],
         "people": sum(r.get("people", 0) for r in regions), "pharmacies": len(points),
         "per_pharmacist": not points,  # Europe: the figure is people per pharmacist, by country
+        "groups": bool(groups),        # Europe: countries act like India's states
         "weights": WEIGHTS, "sources": {k: v for k, v in status.items() if k.startswith(code)},
     }
     (out / "meta.json").write_text(json.dumps(meta, indent=1))
@@ -408,7 +447,17 @@ def main():
         try:
             regions, points, label = fn(args)
             add_measures(regions, points)
-            write(code, cfg, regions, points, label, basemap(cfg, args))
+            groups = None
+            if code == "eu":
+                shapes = {}
+                try:
+                    lvl0 = json.loads(download(EU_COUNTRY_SHAPES, name="eu_nuts0.geojson", refresh=args.refresh, offline=args.offline, timeout=180).read_text())
+                    shapes = {f["properties"]["CNTR_CODE"]: (f["properties"].get("NAME_LATN") or f["properties"]["CNTR_CODE"], shape(f["geometry"]).buffer(0)) for f in lvl0["features"]}
+                except Exception as exc:
+                    note("eu_countries", False, f"{type(exc).__name__}: country shapes made from regions")
+                groups = eu_groups(regions, shapes)
+                note("eu_countries", True, f"{len(groups)} countries")
+            write(code, cfg, regions, points, label, basemap(cfg, args), groups)
             built.append({"code": code, "name": cfg["name"]})
         except Exception as exc:
             note(f"{code}_build", False, f"{type(exc).__name__}: {exc}"[:200])

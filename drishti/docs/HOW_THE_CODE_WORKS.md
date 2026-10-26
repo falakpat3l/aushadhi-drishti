@@ -25,6 +25,7 @@ The background map of India (`public/basemap/`) is made once by `pipeline/basema
 |---|---|
 | `src/main.js` | Starts everything: theme, panel, map, layers, ask box |
 | `src/map.js` | Creates the flat map (MapLibre), sets zoom limits and gestures, fits views |
+| `src/countries.js` | The country tabs, the flight between countries, and the grey world underneath |
 | `src/theme.js` | Light and dark mode, and every map colour for each |
 | `src/ui.js` | Opens and closes the panel; shows details and answers |
 | `src/layers/basemap.js` | Draws India, state lines, neighbours and place names |

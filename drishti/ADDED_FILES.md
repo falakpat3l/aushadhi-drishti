@@ -76,3 +76,7 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/pipeline/world.py`, `drishti/pipeline/seeds/world/` (New Zealand population seed), `drishti/src/world.js`
 - Changed `drishti/src/main.js`, `src/layers/index.js` (country switch), `src/style.css`, `tests/phase_checks.py`, `.github/workflows/drishti-pages.yml` (runs world.py), README, DATA_SOURCES, CHANGELOG
 - Phase 9 (Australia, Europe): changed `drishti/pipeline/world.py`, `src/world.js`, `src/main.js`, DATA_SOURCES, README, CHANGELOG
+
+## Version 0.12
+- Added `drishti/src/countries.js`, `drishti/public/basemap/world-land.json` (Natural Earth 110m land, public domain)
+- Changed `src/map.js` (globe, MapLibre 5 CSP build), `src/theme.js`, `src/world.js` (Europe countries level), `src/layers/index.js`, `src/main.js`, `src/style.css`, `pipeline/world.py` (Europe countries), `tests`, `package.json`, `package-lock.json`, CHANGELOG

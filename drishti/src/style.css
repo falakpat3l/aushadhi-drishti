@@ -227,3 +227,17 @@ ol.results li::marker { color: var(--saffron); font-family: var(--mono); }
   .crumbs h1 { font-size: 15px; margin-bottom: 0; }
   .crumbs p { display: none; }
 }
+
+/* Country tabs: a row of names with a highlight that slides to the picked one. */
+.tabs { position: relative; display: flex; gap: 2px; padding: 4px; margin: 0 0 18px; border: 1px solid var(--rule);
+  border-radius: 999px; overflow-x: auto; scrollbar-width: none; background: var(--bg); }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { position: relative; z-index: 1; flex: none; border: 0; background: none; cursor: pointer; padding: 7px 14px;
+  border-radius: 999px; font: 500 13px var(--mono); color: var(--muted); white-space: nowrap; transition: color 0.25s; }
+.tabs button[aria-selected='true'] { color: #fff; }
+:root[data-theme='dark'] .tabs button[aria-selected='true'] { color: #0e1316; }
+.tabs-mark { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 999px; background: var(--accent);
+  transition: transform 0.35s cubic-bezier(0.3, 0.7, 0.2, 1), width 0.35s cubic-bezier(0.3, 0.7, 0.2, 1); }
+/* Leaving for another country: the panels fade while the globe turns. */
+body.leaving .panel, body.leaving .crumbs, body.leaving .legend { opacity: 0; transition: opacity 0.5s ease; }
+@media (prefers-reduced-motion: reduce) { .tabs-mark, body.leaving .panel { transition: none; } }

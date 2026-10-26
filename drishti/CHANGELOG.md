@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0
+- A round globe when zoomed out (MapLibre 5): drag to turn it, the rest of the world in grey.
+- Country tabs with a sliding highlight replace the country list; switching countries flies across the globe.
+- Europe: countries act like India's states. Show by Countries or Regions, or pick a country to see its regions.
+- Softer colours: teal-green for well served, sand in the middle, coral red for underserved; calmer greys for land and sea.
+
 ## 0.11.0
 - Singapore population now falls back to the Census 2020 table on data.gov.sg when SingStat's site turns the build away.
 - Areas with people but no pharmacy on record now count as the least served, instead of having no score.

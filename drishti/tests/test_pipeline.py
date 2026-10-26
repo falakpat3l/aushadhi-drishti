@@ -225,6 +225,22 @@ class WorldTest(unittest.TestCase):
         self.assertEqual(regions[2]["access_rank"], 1)  # people but no pharmacy: worst served
 
 
+class EuropeGroupsTest(unittest.TestCase):
+    def test_countries_add_up(self):
+        import world
+        from shapely.geometry import box as b
+        regions = [
+            {"country": "DE", "geom": b(0, 0, 1, 1), "people": 1000, "aged_65_plus": 200, "people_per_pharmacist": 1500},
+            {"country": "DE", "geom": b(1, 0, 2, 1), "people": 3000, "aged_65_plus": 300, "people_per_pharmacist": 1500},
+            {"country": "FR", "geom": b(5, 0, 6, 1), "people": 2000, "aged_65_plus": 500, "people_per_pharmacist": 1100},
+        ]
+        groups = {g["id"]: g for g in world.eu_groups(regions, {"FR": ("France", b(5, 0, 6, 1))})}
+        self.assertEqual(groups["DE"]["people"], 4000)
+        self.assertEqual(groups["DE"]["share_65"], 12.5)
+        self.assertEqual(groups["FR"]["name"], "France")
+        self.assertEqual(groups["DE"]["access_rank"], 1)  # more people per pharmacist
+
+
 class NppaTest(unittest.TestCase):
     def test_parse_sample_pdf(self):
         rows = nppa.parse_pdf(FIX / "nppa_sample.pdf")
