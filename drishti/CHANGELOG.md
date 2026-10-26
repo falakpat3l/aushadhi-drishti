@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 (Phase 6)
+- Weekly refresh: the Pages workflow re-fetches every source on Mondays and redeploys. A manual "refresh" button is in the Actions tab.
+- Design document for an opt-in stock-sharing layer (not built).
+
 ## 0.5.0 (Phase 5)
 - "Ask the map" box: plain questions (rank districts, one district, compare, pincodes, medicine price) answered from local data by rules.
 - Optional AI only when running locally with a key in `.env` (Ollama, free and local, or Gemini free tier). The live site never uses AI.

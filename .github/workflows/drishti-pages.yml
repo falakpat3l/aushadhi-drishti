@@ -1,12 +1,20 @@
 # Builds the aushadhi-drishti map (drishti/ folder), checks it in a headless
 # browser at 360 px and 1280 px, and publishes it to GitHub Pages.
+# Every Monday it also re-fetches all open sources (weekly refresh).
 name: drishti pages
 
 on:
   push:
     branches: [main]
     paths: ["drishti/**", ".github/workflows/drishti-pages.yml"]
+  schedule:
+    - cron: "23 2 * * 1"   # Mondays 02:23 UTC (07:53 in India)
   workflow_dispatch:
+    inputs:
+      refresh:
+        description: "Re-fetch every source now"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -44,7 +52,16 @@ jobs:
           pip install -r pipeline/requirements.txt
           python -m unittest discover tests
           node --test tests/ask.test.mjs
-          python pipeline/build.py
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.refresh }}" = "true" ]; then
+            python pipeline/build.py --refresh
+          else
+            python pipeline/build.py
+          fi
+      - name: Upload data notes (which sources worked)
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-meta
+          path: drishti/public/data/meta.json
       - run: npm ci
       - run: npm run build
       - name: Browser check (360 px and 1280 px, no console errors)

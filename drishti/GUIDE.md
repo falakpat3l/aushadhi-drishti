@@ -45,3 +45,6 @@ The live site answers questions with built-in rules only. On your own Mac you ca
 
 `.env` is never committed (it is in `.gitignore`).
 
+## Weekly refresh
+
+Every Monday at 07:53 India time, GitHub Actions re-fetches every source, rebuilds and republishes the map. To refresh now: GitHub, Actions tab, "drishti pages", Run workflow, tick "Re-fetch every source now". The run's "data-meta" download shows which sources worked.

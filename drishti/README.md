@@ -30,7 +30,7 @@ This project is a fork of [God's Eye View](https://github.com/bilawalsidhu/gods-
 | 3 | Insights: people per Kendra, outlets per 10,000 people, and a gap score for where a new generic store helps most ([how it works](docs/gap-score.md)) | Done |
 | 4 | Medicine layers: CDSCO quality alert counts by district and month, with links to the official lists; medicine check linking a brand (via anukalpa) to its generic, NPPA price cap and alert count | Done (see known gaps) |
 | 5 | Ask the map: plain questions answered from the local data by rules; optional local AI with a key in `.env` | Done |
-| 6 | Weekly refresh and a design for opt-in stock sharing | Next |
+| 6 | Weekly refresh (GitHub Actions, Mondays) and a design for opt-in stock sharing ([design doc](docs/design-opt-in-stock-sharing.md)) | Done |
 
 ## Folder map
 
@@ -60,7 +60,7 @@ drishti/
     seeds/              small hand-checked tables (with their sources)
   scripts/              small helper scripts for the build
   tests/                offline data tests and the headless browser check
-  docs/                 research report, gap score, known gaps,
+  docs/                 research report, gap score, stock-sharing design, known gaps,
                         permission request drafts, screenshots
   DATA_SOURCES.md       every data source, licence and fetch method
   ADDED_FILES.md        every file added or changed in this fork

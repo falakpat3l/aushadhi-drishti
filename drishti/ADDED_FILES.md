@@ -34,9 +34,13 @@ Nothing from God's Eye View has been deleted. Everything new is listed here, by 
 - Added `drishti/pipeline/medicines.py`, `pipeline/places.py`, `pipeline/sources/cdsco.py`, `sources/nppa.py`, `sources/anukalpa.py`
 - Added `drishti/src/medicine.js`; changed `src/layers/index.js`, `index.html`, `pipeline/build.py`
 - Added `drishti/tests/fixtures/make_fixtures.py`, `cdsco_sample.pdf`, `nppa_sample.pdf`, `alerts_sample.json`, `medicines_sample.json`; changed `tests/test_pipeline.py`, `tests/phase_checks.py`
-- Added `drishti/docs/permission-requests.md`, `drishti/docs/KNOWN_GAPS.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
+- Added `drishti/docs/permission-requests.md`; changed `drishti/DATA_SOURCES.md`, `README.md`, `CHANGELOG.md`, `src/style.css`
 
 ## Phase 5
 - Added `drishti/src/ask.js`, `src/askRules.js`, `tests/ask.test.mjs`
-- Changed `drishti/src/main.js`, `src/ui.js`, `src/style.css`, `vite.config.js` (local-only AI helper), `.env.example`, `tests/phase_checks.py`, `docs/KNOWN_GAPS.md`, `README.md`, `GUIDE.md`, `CHANGELOG.md`, `.github/workflows/drishti-pages.yml` (runs the ask-rule tests)
+- Changed `drishti/src/main.js`, `src/ui.js`, `src/style.css`, `vite.config.js` (local-only AI helper), `.env.example`, `tests/phase_checks.py`
 
+## Phase 6
+- Changed `.github/workflows/drishti-pages.yml`: weekly schedule, manual refresh option, ask-rule tests, data notes artifact
+- Added `drishti/docs/design-opt-in-stock-sharing.md`, `drishti/docs/KNOWN_GAPS.md`
+- Changed `drishti/README.md`, `GUIDE.md`, `DATA_SOURCES.md`, `CHANGELOG.md`
