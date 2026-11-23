@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+- Weekly refresh is sturdier: a failed download is tried again up to three times, and if a site is still down the build uses its last good copy instead of stopping.
+- Builds run on Ubuntu 24.04 (pinned), since GitHub moved its default runner to Ubuntu 26.04 in November 2026.
+
 ## 1.0.0
 - First major release: all of India with the official map, Singapore, New Zealand, Australia and Europe on one rotatable globe, a seamless country switch and clickable countries. Everything since 0.6.0 is listed below.
 

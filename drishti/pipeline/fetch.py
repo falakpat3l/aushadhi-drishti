@@ -4,15 +4,22 @@
 - Sites other than GitHub are checked against their robots.txt first.
 - Downloads are cached in pipeline/.cache, so a rebuild does not fetch again
   unless --refresh is passed.
+- A failed download is tried again a few times. If it still fails and an older
+  copy is cached, the older copy is used, so one site being down does not stop
+  the weekly refresh.
 """
 import hashlib
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import urllib.robotparser
 from pathlib import Path
 
 from config import CACHE, USER_AGENT
+
+TRIES = 3
+RETRY_WAIT = 20  # seconds; doubles after each failed try
 
 _robots = {}
 _last_call = {}
@@ -61,15 +68,30 @@ def download(url, name=None, refresh=False, offline=False, min_gap=1.0, data=Non
     if not allowed_by_robots(url):
         raise Blocked(url)
     host = urllib.parse.urlsplit(url).netloc
-    _wait_turn(host, min_gap)
     body = data.encode() if data else None
     req = urllib.request.Request(url, data=body, headers={"User-Agent": USER_AGENT, **(headers or {})})
     tmp = path.with_suffix(".part")
-    with urllib.request.urlopen(req, timeout=timeout) as r, open(tmp, "wb") as f:
-        while chunk := r.read(1 << 20):
-            f.write(chunk)
-    tmp.replace(path)
-    return path
+    wait = RETRY_WAIT
+    for attempt in range(1, TRIES + 1):
+        _wait_turn(host, min_gap)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r, open(tmp, "wb") as f:
+                while chunk := r.read(1 << 20):
+                    f.write(chunk)
+            tmp.replace(path)
+            return path
+        except Exception as exc:
+            tmp.unlink(missing_ok=True)
+            # A 4xx answer (other than 429, too many requests) will not change on a retry.
+            final = isinstance(exc, urllib.error.HTTPError) and 400 <= exc.code < 500 and exc.code != 429
+            if final or attempt == TRIES:
+                if path.exists():
+                    print(f"[warn] {url}: {type(exc).__name__}, using the copy from {fetched_at(path)}")
+                    return path
+                raise
+            print(f"[retry] {url}: {type(exc).__name__}, try {attempt + 1} of {TRIES} in {wait} s")
+            time.sleep(wait)
+            wait *= 2
 
 
 def fetched_at(path: Path):

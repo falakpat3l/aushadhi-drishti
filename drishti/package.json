@@ -1,7 +1,7 @@
 {
   "name": "aushadhi-drishti",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Open map of India's pharmacy supply side, built only from public data.",
   "type": "module",
   "license": "MIT",
